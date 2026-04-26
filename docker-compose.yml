@@ -1,0 +1,70 @@
+services:
+
+  os-gateway:
+    build:
+      context: .
+      dockerfile: os-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - RESOURCE_SERVER_BASE_URL=${RESOURCE_SERVER_BASE_URL}
+
+  os-authenticator:
+    build:
+      context: .
+      dockerfile: os-authenticator/Dockerfile
+    depends_on:
+      - os-authenticator-database
+    environment:
+      - DB_HOST=${AUTH_DB_HOST}
+      - DB_NAME=${AUTH_DB_NAME}
+      - DB_USER=${AUTH_DB_USER}
+      - DB_PASSWORD=${AUTH_DB_PASSWORD}
+      - OMNISENTRY_RSA_PUBLIC_KEY=${OMNISENTRY_RSA_PUBLIC_KEY}
+      - OMNISENTRY_RSA_PRIVATE_KEY=${OMNISENTRY_RSA_PRIVATE_KEY}
+    ports:
+      - "8081:8081"
+
+  os-authenticator-database:
+    image: postgres:17.1-alpine
+    environment:
+      - POSTGRES_DB=${AUTH_DB_NAME}
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${AUTH_DB_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  os-main-backend:
+    build:
+      context: .
+      dockerfile: os-main-backend/Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      - os-main-backend-database
+    environment:
+      - APP_ID=${SALT_EDGE_APP_ID}
+      - SECRET=${SALT_EDGE_API_SECRET}
+      - DB_HOST=${MAIN_DB_HOST}
+      - DB_NAME=${MAIN_DB_NAME}
+      - DB_USER=${MAIN_DB_USER}
+      - DB_PASSWORD=${MAIN_DB_PASSWORD}
+
+  os-main-backend-database:
+    image: postgres:17.1-alpine
+    environment:
+      - POSTGRES_DB=${MAIN_DB_NAME}
+      - POSTGRES_USER=${MAIN_DB_USER}
+      - POSTGRES_PASSWORD=${MAIN_DB_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${MAIN_DB_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  omnisentry-net:
+    driver: bridge

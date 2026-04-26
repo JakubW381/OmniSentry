@@ -3,10 +3,15 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST}/auth-db
+    url: jdbc:postgresql://${DB_HOST:localhost:5432}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+app:
+  rsa:
+    public-key: ${OMNISENTRY_RSA_PUBLIC_KEY}
+    private-key: ${OMNISENTRY_RSA_PRIVATE_KEY}

@@ -10,4 +10,5 @@ import java.util.UUID
 interface UserDetailsRepository : JpaRepository<UserDetailsEntity, UUID> {
     fun findByUsername(username : String) : Optional<UserDetailsEntity>
     fun existsByUsername(username : String) : Boolean
+    fun existsByEmail(email : String) : Boolean
 }

@@ -1,13 +1,10 @@
 package dev.jakubw.omnisentry.service
 
-import dev.jakubw.omnisentry.dto.UserPrincipal
 import dev.jakubw.omnisentry.model.AuthRequest
-import dev.jakubw.omnisentry.model.OmniUserDetails
 import dev.jakubw.omnisentry.model.Role
+import dev.jakubw.omnisentry.model.SignUpRequest
 import dev.jakubw.omnisentry.model.UserDetailsEntity
 import dev.jakubw.omnisentry.repository.UserDetailsRepository
-import jakarta.servlet.http.Cookie
-import lombok.RequiredArgsConstructor
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -32,24 +29,28 @@ class OmniUserDetailService(
         return jwtService.generateToken(user.toOmniUserDetails())
     }
 
-    fun register(request: AuthRequest): String {
+    fun register(request: SignUpRequest): String {
         validateRegisterRequest(request)
 
         val user = UserDetailsEntity(
             username = request.username,
+            email = request.email,
             passwordHash = passwordEncoder.encode(request.pass)!!,
             roles = setOf(Role.USER)
         )
         userDetailsRepository.save(user)
 
-        return login(request)
+        return login(AuthRequest(request.username, request.pass))
     }
 
-    private fun validateRegisterRequest(request: AuthRequest) {
+    private fun validateRegisterRequest(request: SignUpRequest) {
         if (request.username.length < 8) throw IllegalArgumentException("Username too short")
         if (request.pass.length < 8) throw IllegalArgumentException("Password too short")
         if (userDetailsRepository.existsByUsername(request.username)) {
             throw IllegalArgumentException("Username already exists")
+        }
+        if (userDetailsRepository.existsByEmail(request.email)) {
+            throw IllegalArgumentException("User with this email address already exists")
         }
     }
 

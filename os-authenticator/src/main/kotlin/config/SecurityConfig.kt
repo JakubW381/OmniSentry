@@ -13,18 +13,18 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+open class SecurityConfig {
 
     @Bean
-    fun passwordEncoder() : PasswordEncoder = BCryptPasswordEncoder()
+    open fun passwordEncoder() : PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun authenticationManager( config : AuthenticationConfiguration ): AuthenticationManager{
+    open fun authenticationManager( config : AuthenticationConfiguration ): AuthenticationManager{
         return config.authenticationManager
     }
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    open fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf{ it.disable() }
             .cors{ it.disable() }
@@ -33,7 +33,7 @@ class SecurityConfig {
             }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .anyRequest().authenticated()
             }

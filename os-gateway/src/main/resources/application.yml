@@ -32,4 +32,4 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://localhost:8082/.well-known/jwks.json
+          jwk-set-uri: ${RESOURCE_SERVER_BASE_URL}/.well-known/jwks.json

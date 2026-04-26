@@ -27,7 +27,7 @@ data class OmniUserDetails(
 }
 
 data class AuthRequest(val username: String, val pass: String)
-
+data class SignUpRequest(val username: String, val pass: String, val email: String)
 enum class Role {
     USER, ADMIN
 }

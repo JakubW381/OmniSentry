@@ -1,8 +1,10 @@
 package dev.jakubw.omnisentry.controllers
 
 import dev.jakubw.omnisentry.model.AuthRequest
+import dev.jakubw.omnisentry.model.SignUpRequest
 import dev.jakubw.omnisentry.service.OmniUserDetailService
 import jakarta.servlet.http.Cookie
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -18,19 +20,11 @@ class AuthController(
     @PostMapping("/login")
     fun login(
         @RequestBody authRequest: AuthRequest,
-        response: jakarta.servlet.http.HttpServletResponse
+        response: HttpServletResponse
     ): ResponseEntity<String> {
         return try {
             val token = userDetailsService.login(authRequest)
-
-            val cookie = Cookie("OmniSentryJwt", token).apply {
-                path = "/"
-                isHttpOnly = true
-                maxAge = 3600
-                // secure = true
-            }
-            response.addCookie(cookie)
-
+            response.addCookie(createCookie(token))
             ResponseEntity.ok("Logged in successfully")
         } catch (e: Exception) {
             ResponseEntity.badRequest().body(e.message)
@@ -39,22 +33,25 @@ class AuthController(
 
     @PostMapping("/register")
     fun register(
-        @RequestBody authRequest: AuthRequest,
-        response: jakarta.servlet.http.HttpServletResponse
+        @RequestBody signUpRequest: SignUpRequest,
+        response: HttpServletResponse
     ): ResponseEntity<String> {
         return try {
-            val token = userDetailsService.register(authRequest)
-
-            val cookie = Cookie("token", token).apply {
-                path = "/"
-                isHttpOnly = true
-                maxAge = 3600
-            }
-            response.addCookie(cookie)
-
+            val token = userDetailsService.register(signUpRequest)
+            response.addCookie(createCookie(token))
             ResponseEntity.ok("Registered and logged in")
         } catch (e: Exception) {
             ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+
+    private fun createCookie(token: String): Cookie {
+        return Cookie("OmniSentryJwt", token).apply {
+            path = "/"
+            isHttpOnly = true
+            maxAge = 3600
+            // secure = true
         }
     }
 }

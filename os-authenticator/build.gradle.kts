@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm")
     id("org.springframework.boot")
     id("io.spring.dependency-management")
+    id("org.jetbrains.kotlin.plugin.jpa")
 }
 
 group = "dev.jakubw.omnisentry"
@@ -10,6 +11,7 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
 }
+
 
 dependencies {
     implementation(project(":os-shared-core"))

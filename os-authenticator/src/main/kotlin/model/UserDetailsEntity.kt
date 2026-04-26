@@ -12,10 +12,14 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
+import lombok.AllArgsConstructor
+import lombok.NoArgsConstructor
 import java.util.UUID
 
 @Entity
 @Table(name = "users")
+@NoArgsConstructor
+@AllArgsConstructor
 class UserDetailsEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,6 +27,9 @@ class UserDetailsEntity(
 
     @Column(unique = true, nullable = false)
     val username: String,
+
+    @Column(unique = true, nullable = false)
+    val email: String,
 
     @Column(nullable = false)
     val passwordHash: String,
