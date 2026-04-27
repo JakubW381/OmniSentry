@@ -1,5 +1,6 @@
 package dev.jakubw.omnisentry.controllers
 
+import dev.jakubw.omnisentry.dto.UserRegistrationDto
 import dev.jakubw.omnisentry.model.AuthRequest
 import dev.jakubw.omnisentry.model.SignUpRequest
 import dev.jakubw.omnisentry.service.OmniUserDetailService
@@ -31,13 +32,25 @@ class AuthController(
         }
     }
 
+    @PostMapping("/check-existence")
+    fun checkExistence(
+        @RequestBody signUpRequest: SignUpRequest
+    ): ResponseEntity<String> {
+        return try {
+            userDetailsService.validateRegisterRequest(signUpRequest)
+            ResponseEntity.ok().body("Username or email is available")
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
     @PostMapping("/register")
     fun register(
-        @RequestBody signUpRequest: SignUpRequest,
+        @RequestBody validateExistenceRequest: UserRegistrationDto,
         response: HttpServletResponse
     ): ResponseEntity<String> {
         return try {
-            val token = userDetailsService.register(signUpRequest)
+            val token = userDetailsService.register(UserRegistrationDto)
             response.addCookie(createCookie(token))
             ResponseEntity.ok("Registered and logged in")
         } catch (e: Exception) {

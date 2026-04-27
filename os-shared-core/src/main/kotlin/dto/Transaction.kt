@@ -1,34 +1,31 @@
 package dev.jakubw.omnisentry.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
-import java.time.Instant
-import java.util.UUID
+import java.util.*
 
-data class Transaction(
-    val id: UUID,                // System ID
-    val externalId: String?,     // ID from Salt Edge
-    val accountId: UUID,         // Account ID
+data class TransactionDto(
+    val internalId: UUID? = null,
+
+    @JsonProperty("id")
+    val transasctionId: String,
+
+    @JsonProperty("account_id")
+    val accountId: String,
 
     val amount: BigDecimal,
+
+    @JsonProperty("currency_code")
     val currency: String,
 
-    val description: String,     // Raw bank description
-    val category: String?,
+    val description: String,
 
-    val madeOn: Instant,         // Transaction Date
-    val status: TransactionStatus,
+    val category: String? = "uncategorized",
 
-    val metadata: TransactionMetadata
+    @JsonProperty("made_on")
+    val madeOn: String,
+
+    val status: String,
+
+    val extra: Map<String, Any>? = emptyMap()
 )
-
-data class TransactionMetadata(
-    val merchantId: String? = null,
-    val time: String? = null,
-    val type: String? = null,
-    val closingBalance: BigDecimal? = null,
-    val city: String? = null
-)
-
-enum class TransactionStatus {
-    POSTED, PENDING, REJECTED
-}
