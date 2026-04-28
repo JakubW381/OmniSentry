@@ -1,16 +1,22 @@
 package dev.jakubw.omnisentry.service
 
+import com.google.protobuf.Timestamp
 import dev.jakubw.omnisentry.dto.UserRegistrationDto
+import dev.jakubw.omnisentry.grpc.UserRegistrationRequest
+import dev.jakubw.omnisentry.grpc.UserRegistrationServiceGrpc.UserRegistrationServiceBlockingStub
 import dev.jakubw.omnisentry.model.AuthRequest
 import dev.jakubw.omnisentry.model.Role
 import dev.jakubw.omnisentry.model.SignUpRequest
 import dev.jakubw.omnisentry.model.UserDetailsEntity
 import dev.jakubw.omnisentry.repository.UserDetailsRepository
+import jakarta.persistence.EntityExistsException
+import net.devh.boot.grpc.client.inject.GrpcClient
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+
 
 @Service
 class OmniUserDetailService(
@@ -18,6 +24,9 @@ class OmniUserDetailService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService
 ) : UserDetailsService {
+
+    @GrpcClient("mainBackend")
+    private lateinit var stub : UserRegistrationServiceBlockingStub
 
     fun login(request: AuthRequest): String {
         val user = userDetailsRepository.findByUsername(request.username)
@@ -41,10 +50,25 @@ class OmniUserDetailService(
             roles = setOf(Role.USER)
         )
 
-        /** TODO
-         *  W tym miejscu Auth service powinien wysyłać GRPC do main-backend
-         *  UserRegistrationDto
-         */
+        val grpcRequest = UserRegistrationRequest.newBuilder()
+            .setUsername(request.username)
+            .setEmail(request.email)
+            .setName(request.name)
+            .setSurname(request.surname)
+            .setDateOfBirth(Timestamp.newBuilder().setSeconds(request.dateOfBirth.epochSecond).setNanos(request.dateOfBirth.nano))
+            .build()
+
+        try {
+            val response = stub.registerUser(grpcRequest)
+            if (!response.result) {
+                throw EntityExistsException("OmniUserDetailService.register ===> " + response.message)
+            }
+            else{
+                println("OmniUserDetailService.register ===> User registered successfully")
+            }
+        } catch (e: Exception) {
+            throw RuntimeException("Could not connect to Main-Backend via gRPC: ${e.message}")
+        }
 
         userDetailsRepository.save(user)
 

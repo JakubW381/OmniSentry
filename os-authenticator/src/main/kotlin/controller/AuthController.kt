@@ -46,11 +46,11 @@ class AuthController(
 
     @PostMapping("/register")
     fun register(
-        @RequestBody validateExistenceRequest: UserRegistrationDto,
+        @RequestBody userRegistrationDto: UserRegistrationDto,
         response: HttpServletResponse
     ): ResponseEntity<String> {
         return try {
-            val token = userDetailsService.register(UserRegistrationDto)
+            val token = userDetailsService.register(userRegistrationDto)
             response.addCookie(createCookie(token))
             ResponseEntity.ok("Registered and logged in")
         } catch (e: Exception) {

@@ -16,11 +16,12 @@ import org.springframework.security.web.SecurityFilterChain
 class GatewaySecurityConfig {
 
     @Value("\${security.oauth2.resourceserver.jwt.jwt-set-uri}")
+    val jwksUri: String? = null
 
     @Bean
     fun jwtDecored(): JwtDecoder{
         return NimbusJwtDecoder
-            .withJwkSetUri("http://localhost:8080/.well-known/jwks.json")
+            .withJwkSetUri(jwksUri)
             .build()
     }
 
@@ -31,6 +32,7 @@ class GatewaySecurityConfig {
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/backend//callbacks/saltedge/**").permitAll()
                     .anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth ->

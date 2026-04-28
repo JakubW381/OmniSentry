@@ -13,15 +13,4 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public   getUserByUsername(String username){
-        UserEntity user = userRepository.findByUsername(username)
-                .orElseThrow( () ->  new UserPrincipalNotFoundException("Username not found"));
-
-
-    }
-    public getUserByEmail(String email){
-
-    }
-
-
 }

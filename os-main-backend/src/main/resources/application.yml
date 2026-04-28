@@ -1,6 +1,8 @@
 server:
   port: 8082
 
+
+
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost:5432}/${DB_NAME}
@@ -10,6 +12,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  grpc:
+    server:
+      port: 9092
 
 app:
   salt-edge:

@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot")
     id("io.spring.dependency-management")
     id("org.jetbrains.kotlin.plugin.jpa")
+    id("com.google.protobuf")
 }
 
 group = "dev.jakubw.omnisentry"
@@ -10,15 +11,17 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.spring.io/milestone") }
+    maven { url = uri("https://repo.spring.io/snapshot") }
 }
 
 
 dependencies {
     implementation(project(":os-shared-core"))
-
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
 
+    implementation("net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE")
     implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

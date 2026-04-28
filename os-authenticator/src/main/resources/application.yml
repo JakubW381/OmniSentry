@@ -11,6 +11,12 @@ spring:
       ddl-auto: update
     show-sql: true
 
+  grpc:
+    client:
+      mainBackend:
+        address: "static://os-main-backend:9092"
+        negotiation-type: "plaintext"
+
 app:
   rsa:
     public-key: ${OMNISENTRY_RSA_PUBLIC_KEY}

@@ -12,12 +12,4 @@ public class TransactionService {
 
     private final SaltEdgeService saltEdgeService;
     private final TransactionRepository transactionRepository;
-
-    public Flux<TransactionDto> getTransactions(String connectionId){
-
-    }
-
-
-
-
 }

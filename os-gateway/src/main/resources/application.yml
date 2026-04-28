@@ -1,33 +1,6 @@
 server:
   port: 8080
 
-spring:
-  cloud:
-    gateway:
-      mvc:
-        routes:
-
-          - id: main-backend
-            uri: lb://user-service
-            predicates:
-              - Path=/api/finance/**
-            filters:
-              - StripPrefix=1
-
-          - id: authenticator
-            uri: lb://authenticator
-            predicates:
-              - Path=/api/auth/**
-            filters:
-              - StripPrefix=1
-
-          - id: ai-agent
-            uri: lb//ai-agent
-            predicates:
-              - Path=/api/ai/**
-            filters:
-              -StripPrefix=1
-
   security:
     oauth2:
       resourceserver:
