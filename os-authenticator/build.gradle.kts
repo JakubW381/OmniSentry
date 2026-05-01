@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    kotlin("plugin.spring")
     id("org.springframework.boot")
     id("io.spring.dependency-management")
     id("org.jetbrains.kotlin.plugin.jpa")
@@ -21,7 +22,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
 
-    implementation("net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE")
+    implementation("org.springframework.grpc:spring-grpc-spring-boot-starter:0.3.0-SNAPSHOT")
     implementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -30,7 +31,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-
+    implementation("org.springframework.boot:spring-boot-starter-tomcat")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
 }

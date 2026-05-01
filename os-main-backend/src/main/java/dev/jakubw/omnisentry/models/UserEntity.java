@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,5 +37,6 @@ public class UserEntity {
     @Column(unique = true)
     private String email;
 
-    private Set<String> connectionIds;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> connectionIds = new HashSet<>();
 }

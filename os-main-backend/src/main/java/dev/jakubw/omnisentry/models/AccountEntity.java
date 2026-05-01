@@ -14,9 +14,6 @@ import java.util.UUID;
 public class AccountEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID internalId;
-
     @Column(unique = true, nullable = false)
     private String saltEdgeAccountId;
 
@@ -27,12 +24,9 @@ public class AccountEntity {
     private String nature;
 
     private String iban;
+    private String bban;
     private String holderName;
     private String status;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> rawExtra;
 
     private String createdAt;
     private String updatedAt;

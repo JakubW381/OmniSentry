@@ -1,8 +1,13 @@
 server:
   port: 8080
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${RESOURCE_SERVER_BASE_URL}/.well-known/jwks.json
+spring:
+  main:
+    allow-bean-definition-overriding: true
+    web-application-type: servlet
+
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        jwk-set-uri: ${RESOURCE_SERVER_BASE_URL:http://os-auth:8081}/.well-known/jwks.json

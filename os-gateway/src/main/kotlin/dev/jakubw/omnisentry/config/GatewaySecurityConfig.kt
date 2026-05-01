@@ -1,4 +1,4 @@
-package config
+package dev.jakubw.omnisentry.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -13,26 +13,26 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class GatewaySecurityConfig {
+open class GatewaySecurityConfig {
 
-    @Value("\${security.oauth2.resourceserver.jwt.jwt-set-uri}")
-    val jwksUri: String? = null
+    @Value($$"${security.oauth2.resourceserver.jwt.jwk-set-uri}")
+    open val jwksUri: String? = null
 
     @Bean
-    fun jwtDecored(): JwtDecoder{
+    open fun jwtDecoder(): JwtDecoder{
         return NimbusJwtDecoder
             .withJwkSetUri(jwksUri)
             .build()
     }
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain{
+    open fun securityFilterChain(http: HttpSecurity): SecurityFilterChain{
         http
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/api/backend//callbacks/saltedge/**").permitAll()
+                    .requestMatchers("/api/backend/callbacks/saltedge/**").permitAll()
                     .anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth ->

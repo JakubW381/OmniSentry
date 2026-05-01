@@ -1,6 +1,8 @@
 package dev.jakubw.omnisentry.controllers;
 
 import dev.jakubw.omnisentry.dto.SaltEdgeResponse;
+import dev.jakubw.omnisentry.services.internal.ConnectionService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,12 +14,19 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/callbacks/saltedge")
+@RequiredArgsConstructor
 public class SaltEdgeWebhook {
 
+    private final ConnectionService connectionService;
+
     @PostMapping("/success")
-    public ResponseEntity<Void> handleSuccess(@RequestBody SaltEdgeResponse<Map<String,Object>> response) {
-        var data = response.data();
-        log.info("Received SaltEdge success callback: {}" , data);
+    public ResponseEntity<Void> handleSuccess(@RequestBody SaltEdgeResponse<Map<String, Object>> response) {
+        Map<String, Object> data = response.data();
+
+        String connectionId = String.valueOf(data.get("connection_id"));
+        String customerId = String.valueOf(data.get("customer_id"));
+
+        connectionService.saveConnection(customerId, connectionId);
         return ResponseEntity.ok().build();
     }
 
@@ -29,8 +38,12 @@ public class SaltEdgeWebhook {
     }
     @PostMapping("/destroy")
     public ResponseEntity<Void> handleDestroy(@RequestBody SaltEdgeResponse<Map<String,Object>> response) {
-        var destroy = response.data();
-        log.info("Received SaltEdge destroy callback: {}" , destroy);
+        Map<String, Object> data = response.data();
+
+        String connectionId = String.valueOf(data.get("connection_id"));
+        String customerId = String.valueOf(data.get("customer_id"));
+
+        connectionService.removeConnection(customerId, connectionId);
         return ResponseEntity.ok().build();
     }
     @PostMapping("/notify")

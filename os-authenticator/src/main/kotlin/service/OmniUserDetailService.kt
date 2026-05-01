@@ -10,7 +10,6 @@ import dev.jakubw.omnisentry.model.SignUpRequest
 import dev.jakubw.omnisentry.model.UserDetailsEntity
 import dev.jakubw.omnisentry.repository.UserDetailsRepository
 import jakarta.persistence.EntityExistsException
-import net.devh.boot.grpc.client.inject.GrpcClient
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -22,11 +21,9 @@ import org.springframework.stereotype.Service
 class OmniUserDetailService(
     private val userDetailsRepository: UserDetailsRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtService: JwtService
+    private val jwtService: JwtService,
+    private val stub : UserRegistrationServiceBlockingStub
 ) : UserDetailsService {
-
-    @GrpcClient("mainBackend")
-    private lateinit var stub : UserRegistrationServiceBlockingStub
 
     fun login(request: AuthRequest): String {
         val user = userDetailsRepository.findByUsername(request.username)

@@ -10,31 +10,30 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.servlet.function.*
-import java.util.function.Function
 
 @Configuration
-class GatewayRoutesConfig {
+open class GatewayRoutesConfig {
 
     @Bean
-    fun gatewayRouting(): RouterFunction<ServerResponse> {
-        return route("main-backend")
+    open fun gatewayRouting(): RouterFunction<ServerResponse> {
+        return route("dev.jakubw.omnisentry.main-backend")
             .route(path("/api/backend/**"), http())
-            .before(stripPrefix(2) as Function<ServerRequest, ServerRequest>)
-            .before(uri("http://user-service")) // Adres ustawiony jako filtr before
+            .filter(stripPrefix(2))
+            .before(uri("http://os-backend"))
             .filter(userHeaderFilter())
             .build()
             .and(
                 route("authenticator")
                     .route(path("/api/auth/**"), http())
-                    .before(stripPrefix(1) as Function<ServerRequest, ServerRequest>)
-                    .before(uri("http://authenticator"))
+                    .filter(stripPrefix(1))
+                    .before(uri("http://os-authenticator"))
                     .build()
             )
             .and(
                 route("ai-agent")
                     .route(path("/api/ai/**"), http())
-                    .before(stripPrefix(1) as Function<ServerRequest, ServerRequest>)
-                    .before(uri("http://ai-agent"))
+                    .filter(stripPrefix(1))
+                    .before(uri("http://os-ai-agent"))
                     .filter(userHeaderFilter())
                     .build()
             )

@@ -27,6 +27,9 @@ public class TransactionEntity {
     @Column(nullable = false)
     private String saltEdgeAccountId;
 
+    @Column(nullable = false)
+    private String saltEdgeConnectionId;
+
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
@@ -46,7 +49,7 @@ public class TransactionEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Map<String, Object> extra;
+    private Map<String, Object> extra = Map.of();
 
     @Builder.Default
     private boolean isSuspicious = false;

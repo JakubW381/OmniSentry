@@ -73,6 +73,16 @@ public class SaltEdgeService {
                 .flatMapMany(response -> Flux.fromIterable(response.data()));
     }
 
+    public Mono<ConnectionDto> getConnection(String connectionId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/connections/" + connectionId)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<ConnectionDto>>() {})
+                .map(SaltEdgeResponse::data);
+    }
+
     public Flux<ConnectionDto> getConnections(String customerId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder

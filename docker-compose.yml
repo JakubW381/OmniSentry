@@ -1,6 +1,7 @@
 services:
 
   os-gateway:
+    container_name: os-gateway
     build:
       context: .
       dockerfile: os-gateway/Dockerfile
@@ -10,6 +11,7 @@ services:
       - RESOURCE_SERVER_BASE_URL=${RESOURCE_SERVER_BASE_URL}
 
   os-authenticator:
+    container_name: os-authenticator
     build:
       context: .
       dockerfile: os-authenticator/Dockerfile
@@ -26,6 +28,7 @@ services:
       - "8081:8081"
 
   os-authenticator-database:
+    container_name: os-authenticator-database
     image: postgres:17.1-alpine
     environment:
       - POSTGRES_DB=${AUTH_DB_NAME}
@@ -38,6 +41,7 @@ services:
       retries: 5
 
   os-main-backend:
+    container_name: os-main-backend
     build:
       context: .
       dockerfile: os-main-backend/Dockerfile
@@ -54,6 +58,7 @@ services:
       - DB_PASSWORD=${MAIN_DB_PASSWORD}
 
   os-main-backend-database:
+    container_name: os-main-backend-database
     image: postgres:17.1-alpine
     environment:
       - POSTGRES_DB=${MAIN_DB_NAME}

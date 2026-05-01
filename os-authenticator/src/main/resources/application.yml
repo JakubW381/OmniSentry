@@ -1,7 +1,9 @@
 server:
   port: 8081
-
 spring:
+  main:
+    allow-bean-definition-overriding: true
+    web-application-type: servlet
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost:5432}/${DB_NAME}
     username: ${DB_USER}
@@ -13,9 +15,10 @@ spring:
 
   grpc:
     client:
-      mainBackend:
-        address: "static://os-main-backend:9092"
-        negotiation-type: "plaintext"
+      channels:
+        user-service:
+          address: "static://os-backend:9090"
+          negotiation-strategy: plaintext
 
 app:
   rsa:

@@ -6,7 +6,6 @@ import java.util.UUID
 
 
 data class AccountDto(
-    val internalId: UUID?,
 
     @JsonProperty("id")
     val saltEdgeAccountId: String,
