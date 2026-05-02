@@ -1,5 +1,7 @@
 services:
 
+  # ------------- GATEWAY -------------
+
   os-gateway:
     container_name: os-gateway
     build:
@@ -9,6 +11,8 @@ services:
       - "8080:8080"
     environment:
       - RESOURCE_SERVER_BASE_URL=${RESOURCE_SERVER_BASE_URL}
+
+  # ------------- AUTHENTICATOR -------------
 
   os-authenticator:
     container_name: os-authenticator
@@ -40,6 +44,8 @@ services:
       timeout: 5s
       retries: 5
 
+  # ------------- MAIN BACKEND -------------
+
   os-main-backend:
     container_name: os-main-backend
     build:
@@ -69,6 +75,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ------------- ANALYSER -------------
+
+  os-analyser:
+    container_name: os-analysser
+    build:
+      context: os-analyser/.
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083" # For future endpoints
 
 networks:
   omnisentry-net:

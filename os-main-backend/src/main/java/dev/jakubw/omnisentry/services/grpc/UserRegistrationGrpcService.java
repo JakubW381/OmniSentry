@@ -1,17 +1,16 @@
-package dev.jakubw.omnisentry.services;
+package dev.jakubw.omnisentry.services.grpc;
 
 import dev.jakubw.omnisentry.dto.CustomerDto;
 import dev.jakubw.omnisentry.grpc.UserRegistrationRequest;
 import dev.jakubw.omnisentry.grpc.UserRegistrationResponse;
-import dev.jakubw.omnisentry.grpc.UserRegistrationServiceGrpc;
 import dev.jakubw.omnisentry.grpc.UserRegistrationServiceGrpc.UserRegistrationServiceImplBase;
 import dev.jakubw.omnisentry.models.UserEntity;
 import dev.jakubw.omnisentry.repos.UserRepository;
+import dev.jakubw.omnisentry.services.SaltEdgeService;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
-import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 

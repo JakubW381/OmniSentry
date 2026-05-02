@@ -16,6 +16,10 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Username not found"));
     }
+    public UserEntity getUserByCustomerId(String customerId){
+        return userRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer Id not found"));
+    }
     public UserDto getUserDto(String username){
         return mapToDto(getByUsername(username));
     }

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="sbt: com.jhlabs:filters:2.0.235:jar" type="java-imported" external-system-id="SBT">
+    <properties groupId="com.jhlabs" artifactId="filters" version="2.0.235" baseVersion="2.0.235" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/com/jhlabs/filters/2.0.235/filters-2.0.235.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/com/jhlabs/filters/2.0.235/filters-2.0.235-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -42,10 +42,10 @@ public class UserController {
      *  TRANSACTIONS
      */
     @GetMapping("/transactions")
-    public ResponseEntity<Flux<TransactionDto>> getTransactions(
+    public ResponseEntity<List<TransactionDto>> getTransactions(
             @RequestParam("connection_id") String connectionId
     ) {
-        Flux<TransactionDto> dtos = transactionService.getTransactions(connectionId);
+        List<TransactionDto> dtos = transactionService.getTransactions(connectionId);
         return ResponseEntity.ok(dtos);
     }
 
@@ -84,6 +84,4 @@ public class UserController {
     ) {
         return ResponseEntity.ok(accountService.getAccounts(connectionId));
     }
-
-
 }

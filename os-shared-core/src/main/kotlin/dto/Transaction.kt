@@ -8,7 +8,7 @@ data class TransactionDto(
     val internalId: UUID? = null,
 
     @JsonProperty("id")
-    val transasctionId: String,
+    val transactionId: String,
 
     @JsonProperty("account_id")
     val accountId: String,

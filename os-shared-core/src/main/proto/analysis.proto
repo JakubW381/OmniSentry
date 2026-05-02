@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package dev.jakubw.omnisentry.proto.analysis;
+
+import "transactions.proto";
+
+option java_multiple_files = true;
+
+message VisualDataDto {
+  repeated string labels = 1;
+  repeated double values = 2;
+  double threshold = 3;
+}
+
+message AnalysisRequest {
+  string user_id = 1;
+  string connection_id = 2;
+}
+
+message AnalysisResponse {
+  string summary_for_ai = 1;
+  map<string, VisualDataDto> visual_data_by_currency = 2;
+  string alert_level = 3;
+}
+
+service AnalysisService {
+  rpc GetExpenseAnalysis (AnalysisRequest) returns (AnalysisResponse);
+  rpc GetAnomalyAnalysis (AnalysisRequest) returns (AnalysisResponse);
+}
