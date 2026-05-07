@@ -8,6 +8,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/os-app-agent" />
             <option value="$PROJECT_DIR$/os-authenticator" />
             <option value="$PROJECT_DIR$/os-gateway" />
             <option value="$PROJECT_DIR$/os-main-backend" />
