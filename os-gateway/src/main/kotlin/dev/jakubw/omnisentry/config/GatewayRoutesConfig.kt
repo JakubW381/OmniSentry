@@ -33,7 +33,7 @@ open class GatewayRoutesConfig {
                 route("ai-agent")
                     .route(path("/api/ai/**"), http())
                     .filter(stripPrefix(1))
-                    .before(uri("http://os-ai-agent"))
+                    .before(uri("http://os-agent"))
                     .filter(userHeaderFilter())
                     .build()
             )

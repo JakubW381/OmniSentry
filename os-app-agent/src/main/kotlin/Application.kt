@@ -1,7 +1,11 @@
 package dev.jakubw.omnisentry
 
 import dev.jakubw.omnisentry.agent.OllamaAgent
-import dev.jakubw.omnisentry.dto.PromptDto
+import dev.jakubw.omnisentry.agent.PromptDto
+import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
+import dev.jakubw.omnisentry.service.AnalysisGrpcService
+import io.grpc.ManagedChannelBuilder
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -11,80 +15,69 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import org.koin.dsl.module
+import org.koin.ktor.ext.inject
+import org.koin.ktor.plugin.Koin
 
+val appModule = module {
+    single {
+        try {
+            val grpcHost = System.getenv("GRPC_HOST") ?: "localhost"
+            val grpcPort = System.getenv("GRPC_PORT")?.toInt() ?: 9090
+            println("DI: Initializing gRPC Channel to $grpcHost:$grpcPort")
 
-fun main(args: Array<String>) {
-
-        if (args.isEmpty()) {
-            println("Running basic server...")
-            println("Provide the 'configured' argument to run a configured server.")
-        }
-        val mode = args.getOrNull(0) ?: "basic"
-
-        when (mode) {
-            "basic" -> runBasicServer()
-            "configured" -> runConfiguredServer()
-            else -> runServerWithCommandLineConfig(args)
+            NettyChannelBuilder.forAddress(grpcHost, grpcPort)
+                .usePlaintext()
+                .build()
+        } catch (e: Exception) {
+            println("DI ERROR: Failed to create gRPC Channel: ${e.message}")
+            throw e
         }
     }
 
-    fun runBasicServer() {
-        val ollama: OllamaAgent = OllamaAgent()
-        embeddedServer(Netty, port = 8085) {
-            install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = true
-                    isLenient = true
-                    ignoreUnknownKeys = true
-                    explicitNulls = false
-                })
-            }
-            routing {
-                get("/") {
-                    call.respondText("Hello, world!")
-                }
-                post("/message") {
-                    val prompt = call.receive<PromptDto>()
-                    call.respondText(ollama.chat(prompt.message))
-                }
-            }
-        }.start(wait = true)
+    single {
+        val channel = get<io.grpc.ManagedChannel>()
+        AnalysisServiceGrpc.newBlockingStub(channel)
     }
 
-    fun runConfiguredServer() {
-        embeddedServer(Netty, configure = {
-            connectors.add(EngineConnectorBuilder().apply {
-                host = "0.0.0.0"
-                port = 8084
+    single { AnalysisGrpcService(get()) }
+
+    factory { OllamaAgent(get()) }
+}
+
+fun main() {
+    println("Starting OmniSentry AI Agent Server on port 8085...")
+
+    embeddedServer(Netty, port = 8085) {
+        install(Koin) {
+            modules(appModule)
+        }
+
+        install(ContentNegotiation) {
+            json(Json {
+                prettyPrint = true
+                isLenient = true
+                ignoreUnknownKeys = true
             })
-            connectionGroupSize = 2
-            workerGroupSize = 5
-            callGroupSize = 10
-            shutdownGracePeriod = 2000
-            shutdownTimeout = 3000
-        }) {
-            routing {
-                get("/") {
-                    call.respondText("Hello, world!")
+        }
+
+        routing {
+            val ollama by inject<OllamaAgent>()
+
+            post("/ai/message") {
+                try {
+                    val prompt = call.receive<PromptDto>()
+                    val response = ollama.chat(prompt.message)
+                    call.respond(response)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText("Error: ${e.message}", status = io.ktor.http.HttpStatusCode.InternalServerError)
                 }
             }
-        }.start(wait = true)
-    }
 
-    fun runServerWithCommandLineConfig(args: Array<String>) {
-        embeddedServer(
-            factory = Netty,
-            configure = {
-                val cliConfig = CommandLineConfig(args)
-                takeFrom(cliConfig.engineConfig)
-                loadCommonConfiguration(cliConfig.rootConfig.environment.config)
+            get("/health") {
+                call.respondText("OK")
             }
-        ) {
-            routing {
-                get("/") {
-                    call.respondText("Hello, world!")
-                }
-            }
-        }.start(wait = true)
-    }
-
+        }
+    }.start(wait = true)
+}

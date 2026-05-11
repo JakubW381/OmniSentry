@@ -79,13 +79,22 @@ services:
   # ------------- ANALYSER -------------
 
   os-analyser:
-    container_name: os-analysser
+    container_name: os-analyser
     build:
       context: os-analyser/.
       dockerfile: Dockerfile
     ports:
       - "8083:8083" # For future endpoints
 
+  # ------------- AGENT -------------
+
+  os-app-agent:
+    container_name: os-app-agent
+    build:
+      context: .
+      dockerfile: os-app-agent/Dockerfile
+    ports:
+      - "8085:8085"
 networks:
   omnisentry-net:
     driver: bridge

@@ -1,5 +1,0 @@
-[0m[[0m[0mdebug[0m] [0m[0mInvalidating cache (input changed)[0m
-[0m[[0m[0minfo[0m] [0m[0mCompiling 2 protobuf files to /home/aamgasi/Desktop/Projects/OmniSentry/OmniSentry/os-analyser/target/scala-3.3.3/src_managed/main/scalapb[0m
-[0m[[0m[0mdebug[0m] [0m[0mprotoc options:[0m
-[0m[[0m[0mdebug[0m] [0m[0mCompiling schema /home/aamgasi/Desktop/Projects/OmniSentry/OmniSentry/os-analyser/src/main/protobuf/transactions.proto[0m
-[0m[[0m[0mdebug[0m] [0m[0mCompiling schema /home/aamgasi/Desktop/Projects/OmniSentry/OmniSentry/os-analyser/src/main/protobuf/analysis.proto[0m

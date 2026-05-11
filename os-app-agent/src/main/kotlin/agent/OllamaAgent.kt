@@ -3,8 +3,6 @@ package dev.jakubw.omnisentry.agent
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.core.tools.annotations.LLMDescription
-import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
@@ -12,9 +10,16 @@ import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
-import dev.jakubw.omnisentry.tools.TestTool
+import dev.jakubw.omnisentry.service.AnalysisGrpcService
+import dev.jakubw.omnisentry.service.AnalysisResponseDto
+import kotlinx.serialization.Serializable
 
-class OllamaAgent : Agent {
+@Serializable
+data class ChatResponse(
+    val message: String,
+    val analysis : AnalysisResponseDto? = null
+)
+class OllamaAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
 
     val localLLama = LLModel(
         id = "llama3.1:8b-instruct-q4_K_M",
@@ -32,7 +37,7 @@ class OllamaAgent : Agent {
                 temperature = 0.7
             )
         ){
-            system("You are very helpful professional painter and digital artist with many followers")
+            system("You are very helpful financial advisor. You are here to help managing user expenses and anomalies in their transactions basing on data from your tools.")
         },
         model = localLLama,
         maxAgentIterations = 10
@@ -44,7 +49,8 @@ class OllamaAgent : Agent {
         ),
         agentConfig = llamaConfig,
         toolRegistry = ToolRegistry{
-            tool(TestTool())
+            tool(ExpensesTool(grpcService))
+            tool(AnomalyTool(grpcService))
         }
     ){
         handleEvents {
@@ -54,15 +60,13 @@ class OllamaAgent : Agent {
         }
     }
 
-    override suspend fun chat(message: String): String {
-        return agent.run(message)
-    }
+    override suspend fun chat(message: String): ChatResponse {
+        lastAnalysisResult = null
 
-    override suspend fun getExpenseAnalysis(rawData: String): String {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun getAnomalyAnalysis(logs: List<String>): String {
-        TODO("Not yet implemented")
+        val aiFinalText = agent.run(message)
+        return ChatResponse(
+            message = aiFinalText,
+            analysis = lastAnalysisResult
+        )
     }
 }

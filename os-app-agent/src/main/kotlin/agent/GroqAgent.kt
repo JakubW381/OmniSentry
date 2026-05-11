@@ -19,15 +19,7 @@ class GroqAgent : Agent {
 //    )
 
 
-    override suspend fun chat(message: String): String {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun getExpenseAnalysis(rawData: String): String {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun getAnomalyAnalysis(logs: List<String>): String {
+    override suspend fun chat(message: String): ChatResponse {
         TODO("Not yet implemented")
     }
 }

@@ -1,0 +1,15 @@
+# SBT / Scala build output
+/target/
+/project/target/
+/project/project/target/
+
+# Scala/BSP tooling
+/.bsp/
+/.bloop/
+/.metals/
+/.scala-build/
+
+# IntelliJ generated project metadata
+/.idea/libraries/
+/.idea/modules/
+*.iml
