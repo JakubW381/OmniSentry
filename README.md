@@ -158,6 +158,7 @@ Shared Kotlin module containing DTOs and `.proto` files for cross-service commun
 - Ollama
 - gRPC and Protocol Buffers
 - PostgreSQL
+- MongoDB
 - Docker Compose
 - Gradle 9
 - SBT
@@ -181,6 +182,8 @@ Create a `.env` file in the repository root when running with Docker Compose.
 SALT_EDGE_APP_ID=your_app_id
 SALT_EDGE_API_SECRET=your_secret
 
+#Check docker-compose.yml for default values
+
 # Main backend database
 MAIN_DB_NAME=main_db
 MAIN_DB_HOST=os-main-backend-database:5432
@@ -199,6 +202,15 @@ AUTH_DB_PASSWORD=admin
 # Authenticator RSA keys
 OMNISENTRY_RSA_PUBLIC_KEY=base64_public_key
 OMNISENTRY_RSA_PRIVATE_KEY=base64_private_key
+
+GROQ_API_KEY=groq_api_key
+
+AGENT_DB_USER=admin
+AGENT_DB_PASSWORD=admin
+
+# os-analyser service host and port
+GRPC_HOST=os-analyser
+GRPC_PORT=9093
 ```
 
 Generate RSA key material with:

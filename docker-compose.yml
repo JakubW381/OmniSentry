@@ -10,7 +10,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - RESOURCE_SERVER_BASE_URL=${RESOURCE_SERVER_BASE_URL}
+      - RESOURCE_SERVER_BASE_URL=${RESOURCE_SERVER_BASE_URL:-http://os-authenticator:8081}
+    networks:
+      - omnisentry-net
 
   # ------------- AUTHENTICATOR -------------
 
@@ -20,29 +22,34 @@ services:
       context: .
       dockerfile: os-authenticator/Dockerfile
     depends_on:
-      - os-authenticator-database
+      os-authenticator-database:
+        condition: service_healthy
     environment:
-      - DB_HOST=${AUTH_DB_HOST}
-      - DB_NAME=${AUTH_DB_NAME}
-      - DB_USER=${AUTH_DB_USER}
-      - DB_PASSWORD=${AUTH_DB_PASSWORD}
+      - DB_HOST=${AUTH_DB_HOST:-os-authenticator-database}
+      - DB_NAME=${AUTH_DB_NAME:-auth-db}
+      - DB_USER=${AUTH_DB_USER:-admin}
+      - DB_PASSWORD=${AUTH_DB_PASSWORD:-admin}
       - OMNISENTRY_RSA_PUBLIC_KEY=${OMNISENTRY_RSA_PUBLIC_KEY}
       - OMNISENTRY_RSA_PRIVATE_KEY=${OMNISENTRY_RSA_PRIVATE_KEY}
     ports:
       - "8081:8081"
+    networks:
+      - omnisentry-net
 
   os-authenticator-database:
     container_name: os-authenticator-database
     image: postgres:17.1-alpine
     environment:
-      - POSTGRES_DB=${AUTH_DB_NAME}
-      - POSTGRES_USER=${AUTH_DB_USER}
-      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_DB_NAME:-auth-db}
+      - POSTGRES_USER=${AUTH_DB_USER:-admin}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD:-admin}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${AUTH_DB_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - omnisentry-net
 
   # ------------- MAIN BACKEND -------------
 
@@ -54,27 +61,32 @@ services:
     ports:
       - "8082:8082"
     depends_on:
-      - os-main-backend-database
+      os-main-backend-database:
+        condition: service_healthy
     environment:
       - APP_ID=${SALT_EDGE_APP_ID}
       - SECRET=${SALT_EDGE_API_SECRET}
-      - DB_HOST=${MAIN_DB_HOST}
-      - DB_NAME=${MAIN_DB_NAME}
-      - DB_USER=${MAIN_DB_USER}
-      - DB_PASSWORD=${MAIN_DB_PASSWORD}
+      - DB_HOST=${MAIN_DB_HOST:-os-main-backend-database}
+      - DB_NAME=${MAIN_DB_NAME:-main-db}
+      - DB_USER=${MAIN_DB_USER:-admin}
+      - DB_PASSWORD=${MAIN_DB_PASSWORD:-admin}
+    networks:
+      - omnisentry-net
 
   os-main-backend-database:
     container_name: os-main-backend-database
     image: postgres:17.1-alpine
     environment:
-      - POSTGRES_DB=${MAIN_DB_NAME}
-      - POSTGRES_USER=${MAIN_DB_USER}
-      - POSTGRES_PASSWORD=${MAIN_DB_PASSWORD}
+      - POSTGRES_DB=${MAIN_DB_NAME:-main-db}
+      - POSTGRES_USER=${MAIN_DB_USER:-admin}
+      - POSTGRES_PASSWORD=${MAIN_DB_PASSWORD:-admin}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${MAIN_DB_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - omnisentry-net
 
   # ------------- ANALYSER -------------
 
@@ -84,7 +96,10 @@ services:
       context: os-analyser/.
       dockerfile: Dockerfile
     ports:
-      - "8083:8083" # For future endpoints
+      - "8083:8083"
+      - "9093:9093" # Port gRPC musi być wystawiony wewnątrz sieci
+    networks:
+      - omnisentry-net
 
   # ------------- AGENT -------------
 
@@ -95,6 +110,27 @@ services:
       dockerfile: os-app-agent/Dockerfile
     ports:
       - "8085:8085"
+    depends_on:
+      - os-app-agent-database
+      - os-analyser
+    environment:
+      - AGENT_DB_URI=mongodb://${AGENT_DB_USER:-admin}:${AGENT_DB_PASSWORD:-admin}@os-app-agent-database:27017/?authSource=admin
+      - GRPC_HOST=${GRPC_HOST:-os-analyser}
+      - GRPC_PORT=${GRPC_PORT:-9093}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://172.17.0.1:11434}
+    networks:
+      - omnisentry-net
+
+  os-app-agent-database:
+    container_name: os-app-agent-database
+    image: mongo:5.0.10
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${AGENT_DB_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${AGENT_DB_PASSWORD:-admin}
+    networks:
+      - omnisentry-net
+
 networks:
   omnisentry-net:
     driver: bridge

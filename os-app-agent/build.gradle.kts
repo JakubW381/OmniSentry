@@ -1,4 +1,4 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 
 plugins {
     kotlin("jvm")
@@ -27,6 +27,9 @@ dependencies {
         exclude(group = "org.springframework.grpc")
     }
 
+    implementation("io.netty:netty-transport-native-epoll:4.1.100.Final:linux-x86_64")
+    implementation("io.netty:netty-all:4.1.100.Final")
+
     implementation(kotlin("reflect"))
     implementation("ai.koog:koog-agents:0.7.1")
 
@@ -36,7 +39,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.3")
 
     val grpcVersion = "1.60.0"
-    implementation("io.grpc:grpc-netty-shaded:$grpcVersion")
+    implementation("io.grpc:grpc-netty:$grpcVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("io.grpc:grpc-stub:$grpcVersion")
     implementation("io.grpc:grpc-services:$grpcVersion")
@@ -47,10 +50,16 @@ dependencies {
     implementation("io.insert-koin:koin-core")
     implementation("io.insert-koin:koin-ktor")
 
+    implementation(platform("org.mongodb:mongodb-driver-bom:5.7.0"))
+    implementation("org.mongodb:mongodb-driver-kotlin-coroutine")
+    implementation("org.mongodb:bson-kotlin")
+
+
     implementation("ch.qos.logback:logback-classic:1.5.12")
 }
 
-tasks.withType<ShadowJar> {
+tasks.shadowJar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
 
     archiveFileName.set("app.jar")

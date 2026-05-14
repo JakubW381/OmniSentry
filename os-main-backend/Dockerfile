@@ -7,7 +7,9 @@ RUN gradle :os-main-backend:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-RUN apk add --no-local-cache bash
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/os-main-backend/build/libs/*.jar app.jar
 EXPOSE 8082

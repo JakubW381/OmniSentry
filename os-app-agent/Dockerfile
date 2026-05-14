@@ -12,7 +12,7 @@ WORKDIR /app
 
 COPY --from=build /home/gradle/src/os-app-agent/build/libs/*.jar app.jar
 
-ENV OLLAMA_HOST="http://host.docker.internal:11434"
+ENV OLLAMA_HOST="http://172.17.0.1:11434"
 ENV GRPC_HOST="os-analyser"
 ENV GRPC_PORT="9093"
 

@@ -1,11 +1,13 @@
 package dev.jakubw.omnisentry
 
+import com.mongodb.kotlin.client.coroutine.MongoClient
+import dev.jakubw.omnisentry.agent.ChatResponse
 import dev.jakubw.omnisentry.agent.OllamaAgent
 import dev.jakubw.omnisentry.agent.PromptDto
 import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
+import dev.jakubw.omnisentry.repository.MongoMessageRepository
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 import io.grpc.ManagedChannelBuilder
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -26,12 +28,31 @@ val appModule = module {
             val grpcPort = System.getenv("GRPC_PORT")?.toInt() ?: 9090
             println("DI: Initializing gRPC Channel to $grpcHost:$grpcPort")
 
-            NettyChannelBuilder.forAddress(grpcHost, grpcPort)
+            ManagedChannelBuilder.forAddress(grpcHost, grpcPort)
                 .usePlaintext()
                 .build()
         } catch (e: Exception) {
             println("DI ERROR: Failed to create gRPC Channel: ${e.message}")
             throw e
+        }
+    }
+    val mongo = module {
+        // Client
+        single{
+            val uri = System.getenv("AGENT_DB_URI") ?: "mongodb://localhost:27017"
+            MongoClient.create(uri)
+        }
+        // Database
+        single{
+            val dbName = System.getenv("AGENT_DB_NAME") ?: "omnisentry"
+            val client = get<MongoClient>()
+            client.getDatabase(dbName)
+        }
+
+        // Repository
+        //  --- Messages
+        single {
+            MongoMessageRepository(get())
         }
     }
 
@@ -62,12 +83,13 @@ fun main() {
         }
 
         routing {
-            val ollama by inject<OllamaAgent>()
+
 
             post("/ai/message") {
+                val ollama by inject<OllamaAgent>()
                 try {
                     val prompt = call.receive<PromptDto>()
-                    val response = ollama.chat(prompt.message)
+                    val response : ChatResponse = ollama.chat(prompt.message)
                     call.respond(response)
                 } catch (e: Exception) {
                     e.printStackTrace()
