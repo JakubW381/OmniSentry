@@ -34,7 +34,7 @@ public class UserController {
     /**
      *  USER
      */
-    @GetMapping()
+    @GetMapping
     public ResponseEntity<UserDto> getUser(@RequestHeader("X-User-Username") String username) {
         return ResponseEntity.ok(userService.getUserDto(username));
     }

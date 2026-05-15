@@ -41,11 +41,12 @@ public class UserRegistrationGrpcService extends UserRegistrationServiceImplBase
         }
 
         UserEntity userEntity = UserEntity.builder()
+                .username(request.getUsername())
                 .email(request.getEmail())
                 .name(request.getName())
                 .surname(request.getSurname())
                 .dateOfBirth(Instant.ofEpochSecond(request.getDateOfBirth().getSeconds(), request.getDateOfBirth().getNanos()))
-                .customerId(customerDto.id())
+                .customerId(customerDto.customerId())
                 .build();
 
         userRepository.save(userEntity);

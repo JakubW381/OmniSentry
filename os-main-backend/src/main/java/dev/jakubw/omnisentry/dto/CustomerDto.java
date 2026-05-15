@@ -1,3 +1,8 @@
 package dev.jakubw.omnisentry.dto;
 
-public record CustomerDto(String id, String identifier) {}
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record CustomerDto(
+        @JsonProperty("customer_id")
+        String customerId,
+        String identifier) {}

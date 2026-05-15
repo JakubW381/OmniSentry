@@ -50,7 +50,7 @@ public class SaltEdgeService {
         );
 
         return webClient.post()
-                .uri("/connect_sessions/create")
+                .uri("/connections/connect")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(payload)
                 .retrieve()

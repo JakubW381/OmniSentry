@@ -19,7 +19,7 @@ public class SaltEdgeConfig {
         log.info("App ID: {}", appId);
         log.info("Secret: {}", secret);
         return WebClient.builder()
-                .baseUrl("https://www.saltedge.com/api/v5")
+                .baseUrl("https://www.saltedge.com/api/v6")
                 .defaultHeader("App-id", appId)
                 .defaultHeader("Secret", secret)
                 .defaultHeader("Accept", "application/json")

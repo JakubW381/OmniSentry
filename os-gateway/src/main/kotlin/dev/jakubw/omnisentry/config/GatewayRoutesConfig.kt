@@ -19,7 +19,7 @@ open class GatewayRoutesConfig {
         return route("dev.jakubw.omnisentry.main-backend")
             .route(path("/api/backend/**"), http())
             .filter(stripPrefix(2))
-            .before(uri("http://os-backend:8082"))
+            .before(uri("http://os-main-backend:8082"))
             .filter(userHeaderFilter())
             .build()
             .and(
