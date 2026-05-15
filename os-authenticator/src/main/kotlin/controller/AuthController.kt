@@ -1,4 +1,4 @@
-package dev.jakubw.omnisentry.controllers
+package dev.jakubw.omnisentry.controller
 
 import dev.jakubw.omnisentry.dto.UserRegistrationDto
 import dev.jakubw.omnisentry.model.AuthRequest

@@ -37,6 +37,7 @@ class OmniUserDetailService(
     }
 
     fun register(request: UserRegistrationDto): String {
+        println("Request: " + request.toString())
         val principals = SignUpRequest(request.username, request.pass, request.email)
         validateRegisterRequest(principals)
 
@@ -64,6 +65,7 @@ class OmniUserDetailService(
                 println("OmniUserDetailService.register ===> User registered successfully")
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             throw RuntimeException("Could not connect to Main-Backend via gRPC: ${e.message}")
         }
 

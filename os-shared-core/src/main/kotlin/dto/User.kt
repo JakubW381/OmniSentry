@@ -1,23 +1,35 @@
 package dev.jakubw.omnisentry.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 import java.util.*
 
 data class UserDto(
-    val username : String,
-    val name : String,
-    val surname : String,
-    val dateOfBirth : Instant,
-    val email : String,
+    @JsonProperty("username")
+    val username : String = "",
+    @JsonProperty("name")
+    val name : String = "",
+    @JsonProperty("surname")
+    val surname : String = "",
+    @JsonProperty("dateOfBirth")
+    val dateOfBirth : Instant = Instant.now(),
+    @JsonProperty("email")
+    val email : String= "",
 )
 
 data class UserRegistrationDto(
-    val username : String,
-    val name : String,
-    val surname : String,
-    val dateOfBirth : Instant,
-    val email : String,
-    val pass : String
+    @JsonProperty("username")
+    val username : String= "",
+    @JsonProperty("name")
+    val name : String= "",
+    @JsonProperty("surname")
+    val surname : String = "",
+    @JsonProperty("dateOfBirth")
+    val dateOfBirth : Instant= Instant.now(),
+    @JsonProperty("email")
+    val email : String = "",
+    @JsonProperty("pass")
+    val pass : String = ""
 )
 
 data class UserPrincipal(

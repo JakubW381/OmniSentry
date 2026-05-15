@@ -10,14 +10,12 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repo.spring.io/milestone") }
-    maven { url = uri("https://repo.spring.io/snapshot") }
 }
 
 dependencies {
     testImplementation(kotlin("test"))
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
-    implementation("org.springframework.grpc:spring-grpc-spring-boot-starter:0.3.0-SNAPSHOT")
+    implementation("org.springframework.grpc:spring-grpc-spring-boot-starter:1.0.3")
     implementation("io.grpc:grpc-netty-shaded:1.62.2")
     implementation("io.grpc:grpc-protobuf:1.62.2")
     implementation("io.grpc:grpc-stub:1.62.2")

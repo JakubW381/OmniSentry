@@ -14,5 +14,5 @@ libraryDependencies ++= Seq(
   "com.github.haifengl" %% "smile-scala" % "3.0.2",
   "com.thesamet.scalapb" %% "scalapb-runtime" % "0.11.13" % "protobuf",
   "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % "0.11.13",
-  "io.grpc" % "grpc-netty-shaded" % "1.50.0"
+  "io.grpc" % "grpc-netty-shaded" % "1.70.0"
 )

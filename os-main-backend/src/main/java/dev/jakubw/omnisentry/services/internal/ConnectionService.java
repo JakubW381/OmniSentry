@@ -44,7 +44,7 @@ public class ConnectionService {
         UserEntity user = userRepository.findByCustomerId(customerId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.getConnectionIds().remove(connectionId);
-        transactionRepository.deleteAllByConnectionId(connectionId);
+        transactionRepository.deleteAllBySaltEdgeConnectionId(connectionId);
         connectionRepository.deleteBySaltEdgeConnectionId(connectionId);
         userRepository.save(user);
     }

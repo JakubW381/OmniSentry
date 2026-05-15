@@ -27,8 +27,8 @@ dependencies {
         exclude(group = "org.springframework.grpc")
     }
 
-    implementation("io.netty:netty-transport-native-epoll:4.1.100.Final:linux-x86_64")
-    implementation("io.netty:netty-all:4.1.100.Final")
+    implementation("io.netty:netty-transport-native-epoll:4.1.115.Final:linux-x86_64")
+    implementation("io.netty:netty-all:4.1.115.Final")
 
     implementation(kotlin("reflect"))
     implementation("ai.koog:koog-agents:0.7.1")
@@ -38,13 +38,15 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:3.4.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.3")
 
-    val grpcVersion = "1.60.0"
-    implementation("io.grpc:grpc-netty:$grpcVersion")
-    implementation("io.grpc:grpc-protobuf:$grpcVersion")
-    implementation("io.grpc:grpc-stub:$grpcVersion")
-    implementation("io.grpc:grpc-services:$grpcVersion")
-    implementation("io.grpc:grpc-kotlin-stub:1.4.1")
-    implementation("com.google.protobuf:protobuf-kotlin:3.24.0")
+    val grpcVersion = "1.70.0"
+    implementation(platform("io.grpc:grpc-bom:$grpcVersion"))
+    implementation("io.grpc:grpc-netty")
+    implementation("io.grpc:grpc-protobuf")
+    implementation("io.grpc:grpc-stub")
+    implementation("io.grpc:grpc-services")
+
+    implementation("io.grpc:grpc-kotlin-stub:1.4.3")
+    implementation("com.google.protobuf:protobuf-kotlin:3.25.5")
 
     implementation(platform("io.insert-koin:koin-bom:4.1.1"))
     implementation("io.insert-koin:koin-core")
@@ -54,8 +56,17 @@ dependencies {
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine")
     implementation("org.mongodb:bson-kotlin")
 
-
     implementation("ch.qos.logback:logback-classic:1.5.12")
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "io.grpc") {
+                useVersion("1.70.0")
+            }
+        }
+    }
 }
 
 tasks.shadowJar {

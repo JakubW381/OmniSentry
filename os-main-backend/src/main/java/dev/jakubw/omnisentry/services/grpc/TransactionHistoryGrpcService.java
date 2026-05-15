@@ -11,6 +11,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Objects;
 
 @Slf4j
 @GrpcService
+@Service
 @RequiredArgsConstructor
 public class TransactionHistoryGrpcService extends AnalyticsDataServiceImplBase {
 

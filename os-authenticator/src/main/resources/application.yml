@@ -10,6 +10,7 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
+
       ddl-auto: update
     show-sql: true
 
@@ -17,7 +18,7 @@ spring:
     client:
       channels:
         user-service:
-          address: "static://os-backend:9092"
+          address: "static://os-main-backend:9092"
           negotiation-strategy: plaintext
 
 app:

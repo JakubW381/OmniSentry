@@ -40,11 +40,13 @@ services:
     container_name: os-authenticator-database
     image: postgres:17.1-alpine
     environment:
-      - POSTGRES_DB=${AUTH_DB_NAME:-auth-db}
+      - POSTGRES_DB=${AUTH_DB_NAME:-auth_db}
       - POSTGRES_USER=${AUTH_DB_USER:-admin}
       - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD:-admin}
+    ports:
+      - "5433:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${AUTH_DB_USER:-admin} -d $${AUTH_DB_NAME:-auth_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,8 +82,10 @@ services:
       - POSTGRES_DB=${MAIN_DB_NAME:-main-db}
       - POSTGRES_USER=${MAIN_DB_USER:-admin}
       - POSTGRES_PASSWORD=${MAIN_DB_PASSWORD:-admin}
+    ports:
+      - "5434:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${MAIN_DB_USER:-admin} -d $${MAIN_DB_NAME:-main_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -97,7 +101,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8083:8083"
-      - "9093:9093" # Port gRPC musi być wystawiony wewnątrz sieci
+      - "9093:9093"
     networks:
       - omnisentry-net
 
@@ -128,8 +132,15 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${AGENT_DB_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${AGENT_DB_PASSWORD:-admin}
+    ports:
+      - "27018:27017"
     networks:
       - omnisentry-net
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.stats()" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   omnisentry-net:

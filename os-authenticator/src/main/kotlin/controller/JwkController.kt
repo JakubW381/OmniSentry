@@ -1,4 +1,4 @@
-package dev.jakubw.omnisentry.controllers
+package dev.jakubw.omnisentry.controller
 
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
