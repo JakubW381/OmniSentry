@@ -67,7 +67,6 @@ public class TransactionHistoryGrpcService extends AnalyticsDataServiceImplBase 
     private Transactions.TransactionDto mapToProto(TransactionDto dto) {
         dto.getAmount();
         return Transactions.TransactionDto.newBuilder()
-                .setInternalId(Objects.requireNonNullElse(dto.getInternalId(), "").toString())
                 .setTransactionId(dto.getTransactionId())
                 .setAccountId(dto.getAccountId())
                 .setAmount(dto.getAmount().doubleValue())

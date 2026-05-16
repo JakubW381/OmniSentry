@@ -44,8 +44,9 @@ public class SaltEdgeService {
         Map<String, Object> payload = Map.of(
                 "data", Map.of(
                         "customer_id", customerId,
-                        "consent", Map.of("scopes", List.of("account_details", "transactions_details")),
-                        "attempt", Map.of("return_to", returnTo)
+                        "consent", Map.of("scopes", List.of("accounts", "transactions", "holder_info")),
+                        "attempt", Map.of("return_to", returnTo),
+                        "automatic_refresh" , true
                 )
         );
 

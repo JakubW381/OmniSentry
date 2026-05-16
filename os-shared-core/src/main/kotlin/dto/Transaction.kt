@@ -5,7 +5,6 @@ import java.math.BigDecimal
 import java.util.*
 
 data class TransactionDto(
-    val internalId: UUID? = null,
 
     @JsonProperty("id")
     val transactionId: String,
@@ -13,19 +12,24 @@ data class TransactionDto(
     @JsonProperty("account_id")
     val accountId: String,
 
+    @JsonProperty("amount")
     val amount: BigDecimal,
 
     @JsonProperty("currency_code")
     val currency: String,
 
+    @JsonProperty("description")
     val description: String,
 
+    @JsonProperty("category")
     val category: String? = "uncategorized",
 
     @JsonProperty("made_on")
     val madeOn: String,
 
+    @JsonProperty("status")
     val status: String,
 
+    @JsonProperty("extra")
     val extra: Map<String, Any>? = emptyMap()
 )

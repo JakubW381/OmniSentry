@@ -8,31 +8,38 @@ import java.util.UUID
 data class AccountDto(
 
     @JsonProperty("id")
-    val saltEdgeAccountId: String,
+    val saltEdgeAccountId: String = "",
 
     @JsonProperty("connection_id")
-    val connectionId: String,
+    val connectionId: String = "",
 
-    val name: String,
-    val balance: BigDecimal,
-    val nature: String,
+    @JsonProperty("name")
+    val name: String = "",
+    @JsonProperty("balance")
+    val balance: BigDecimal = BigDecimal.ZERO,
+    @JsonProperty("nature")
+    val nature: String = "",
 
     @JsonProperty("currency_code")
-    val currency: String,
+    val currency: String = "",
 
-    val extra: AccountExtraDto,
+    @JsonProperty("extra")
+    val extra: AccountExtraDto = AccountExtraDto(),
 
     @JsonProperty("created_at")
-    val createdAt: String,
+    val createdAt: String = "",
 
     @JsonProperty("updated_at")
-    val updatedAt: String
+    val updatedAt: String = ""
 )
 
 data class AccountExtraDto(
-    val iban: String? = null,
-    val bban: String? = null,
-    val status: String? = null,
+    @JsonProperty("iban")
+    val iban: String? = "",
+    @JsonProperty("bban")
+    val bban: String? = "",
+    @JsonProperty("status")
+    val status: String? = "",
     @JsonProperty("holder_name")
-    val holderName: String? = null
+    val holderName: String? = ""
 )

@@ -15,9 +15,6 @@ import java.util.UUID;
 public class ConnectionEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID internalId;
-
     @Column(unique = true, nullable = false)
     private String saltEdgeConnectionId;
 

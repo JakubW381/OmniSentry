@@ -42,9 +42,9 @@ open class GatewayRoutesConfig {
     private fun userHeaderFilter(): HandlerFilterFunction<ServerResponse, ServerResponse> {
         return HandlerFilterFunction { request, next ->
             val auth = SecurityContextHolder.getContext().authentication
-
             if (auth != null && auth.principal is Jwt) {
-                val username = auth.name
+                val jwt = auth.principal as Jwt
+                val username = jwt.getClaimAsString("username")
                 val modifiedRequest = ServerRequest.from(request)
                     .header("X-User-Username", username)
                     .build()

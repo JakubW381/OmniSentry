@@ -54,7 +54,7 @@ public class TransactionService {
                 .map(tx -> saltEdgeService.getTransactions(connectionId, Optional.of(tx.getSaltEdgeTransactionId())))
                 .orElseGet(() -> saltEdgeService.getTransactions(connectionId))
                 .collectList()
-                .block(); // Blokujemy, bo reszta serwisu jest synchroniczna
+                .block();
 
         if (newDtos != null && !newDtos.isEmpty()) {
             log.info("Saving {} new transactions for connection {}", newDtos.size(), connectionId);
@@ -83,7 +83,6 @@ public class TransactionService {
 
     private TransactionDto mapToDto(TransactionEntity entity) {
         return new TransactionDto(
-                entity.getInternalId(),
                 entity.getSaltEdgeTransactionId(),
                 entity.getSaltEdgeAccountId(),
                 entity.getAmount(),

@@ -4,32 +4,31 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.UUID
 
 data class ConnectionDto(
-    val internalId: UUID?,
-
     @JsonProperty("id")
-    val connectionId: String,
+    val connectionId: String= "",
 
     @JsonProperty("customer_id")
-    val customerId: String,
+    val customerId: String = "",
 
     @JsonProperty("provider_name")
-    val providerName: String,
+    val providerName: String = "",
 
     @JsonProperty("provider_code")
-    val providerCode: String,
+    val providerCode: String = "",
 
     @JsonProperty("created_at")
-    val createdAt: String,
+    val createdAt: String = "",
 
     @JsonProperty("last_attempt")
-    val lastAttempt: LastAttemptDto,
+    val lastAttempt: LastAttemptDto = LastAttemptDto(),
 
-    val status: String
+    @JsonProperty("status")
+    val status: String = ""
 )
 
 data class LastAttemptDto(
     @JsonProperty("device_type")
-    val deviceType: String?,
+    val deviceType: String? = "",
     @JsonProperty("remote_ip")
-    val remoteIp: String?
+    val remoteIp: String? = ""
 )

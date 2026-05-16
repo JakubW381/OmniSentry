@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,11 +27,16 @@ public class ConnectionService {
 
     @Transactional
     public void saveConnection(String customerId, String connectionId){
+        System.out.println("SaveConnection()");
         UserEntity user = userRepository.findByCustomerId(customerId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        ConnectionEntity connection = mapToEntity(Objects.requireNonNull(saltEdgeService.getConnection(connectionId).block()));
-        user.getConnectionIds().add(connectionId);
-        connectionRepository.save(connection);
+        System.out.println("Getting connection from saltEdge");
+        ConnectionDto connectionDto = saltEdgeService.getConnection(connectionId).block();
+        System.out.println("Save connection connectionDto: " + connectionDto);
+        ConnectionEntity connection = mapToEntity(Objects.requireNonNull(connectionDto));
+        connection.setCreatedAt(String.valueOf(Instant.now()));
+        ConnectionEntity saved = connectionRepository.save(connection);
+        user.getConnectionIds().add(String.valueOf(saved.getSaltEdgeConnectionId()));
         userRepository.save(user);
     }
 
@@ -62,7 +68,6 @@ public class ConnectionService {
     }
     private ConnectionDto mapToDto(ConnectionEntity entity) {
         return new ConnectionDto(
-                entity.getInternalId(),
                 entity.getSaltEdgeConnectionId(),
                 entity.getCustomerId(),
                 entity.getProviderName(),
