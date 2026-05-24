@@ -50,6 +50,4 @@ public class TransactionEntity {
 
     @Builder.Default
     private boolean isSuspicious = false;
-
-    private String createdAt;
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 data class MessageEntity(
@@ -61,7 +62,7 @@ class MongoMessageRepository(
 
     override suspend fun saveMessage(message: Message) {
         try {
-            withTimeout(2000) {
+            withTimeout(2000.milliseconds) {
                 collection.insertOne(message.toEntity())
 
             }

@@ -1,11 +1,12 @@
 package dev.jakubw.omnisentry
 package service
 
+import analyser.*
+import dto.AnalysisResult
 import proto.analysis.*
+import proto.analysis.analysis.{AnalysisRequest, AnalysisResponse, AnalysisServiceGrpc, VisualDataDto}
 import proto.transactions.*
 
-import dev.jakubw.omnisentry.analyser.*
-import dev.jakubw.omnisentry.dto.AnalysisResult
 import io.grpc.ManagedChannelBuilder
 
 import scala.concurrent.{ExecutionContext, Future}

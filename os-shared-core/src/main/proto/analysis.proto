@@ -24,6 +24,6 @@ message AnalysisResponse {
 }
 
 service AnalysisService {
-  rpc GetExpenseAnalysis (AnalysisRequest) returns (AnalysisResponse);
-  rpc GetAnomalyAnalysis (AnalysisRequest) returns (AnalysisResponse);
+  rpc getExpenseAnalysis (AnalysisRequest) returns (AnalysisResponse);
+  rpc getAnomalyAnalysis (AnalysisRequest) returns (AnalysisResponse);
 }

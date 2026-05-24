@@ -38,7 +38,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:3.4.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.3")
 
-    val grpcVersion = "1.70.0"
+    val grpcVersion = "1.80.0"
     implementation(platform("io.grpc:grpc-bom:$grpcVersion"))
     implementation("io.grpc:grpc-netty")
     implementation("io.grpc:grpc-protobuf")
@@ -62,8 +62,8 @@ dependencies {
 configurations.all {
     resolutionStrategy {
         eachDependency {
-            if (requested.group == "io.grpc") {
-                useVersion("1.70.0")
+            if (requested.group == "io.grpc" && requested.name != "grpc-kotlin-stub") {
+                useVersion("1.80.0")
             }
         }
     }

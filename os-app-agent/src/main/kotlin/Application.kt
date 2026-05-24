@@ -1,7 +1,9 @@
 package dev.jakubw.omnisentry
 
 import com.mongodb.kotlin.client.coroutine.MongoClient
+import dev.jakubw.omnisentry.agent.BaseAgent
 import dev.jakubw.omnisentry.agent.ChatResponse
+import dev.jakubw.omnisentry.agent.GroqAgent
 import dev.jakubw.omnisentry.agent.OllamaAgent
 import dev.jakubw.omnisentry.agent.PromptDto
 import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
@@ -63,7 +65,11 @@ val appModule = module {
 
     single { AnalysisGrpcService(get()) }
 
-    factory { OllamaAgent(get()) }
+    if (System.getenv("AGENT_TYPE") == "GROQ") {
+        factory { GroqAgent(get()) }
+    }else{
+        factory { OllamaAgent(get()) }
+    }
 }
 
 fun main() {
@@ -84,12 +90,11 @@ fun main() {
 
         routing {
 
-
             post("/ai/message") {
-                val ollama by inject<OllamaAgent>()
+                val agent by inject<BaseAgent>()
                 try {
                     val prompt = call.receive<PromptDto>()
-                    val response : ChatResponse = ollama.chat(prompt.message)
+                    val response : ChatResponse = agent.chat("message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}")
                     call.respond(response)
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -97,7 +102,7 @@ fun main() {
                 }
             }
 
-            get("/health") {
+            get("/ai/health") {
                 call.respondText("OK")
             }
         }

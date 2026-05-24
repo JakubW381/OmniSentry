@@ -1,6 +1,6 @@
 package dev.jakubw.omnisentry
 
-import proto.analysis.AnalysisServiceGrpc
+import proto.analysis.analysis.AnalysisServiceGrpc
 import service.AnalysisService
 
 import io.grpc.ServerBuilder

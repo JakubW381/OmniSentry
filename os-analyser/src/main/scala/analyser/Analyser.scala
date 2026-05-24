@@ -49,7 +49,6 @@ class Analyser {
     if (transactions.size < 10) {
       return AnalysisResult("Sample is too small for anomaly analysis.", Map.empty, "LOW")
     }
-
     val data = transactions.map(Extractor.toFeatures).toArray
     val properties = new Properties()
     properties.setProperty("smile.isolation_forest.trees", "100")

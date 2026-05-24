@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 
 /** TODO
@@ -38,7 +39,7 @@ public class TransactionService {
                 .toList();
     }
 
-    public List<TransactionDto> getTransactionsAfter(String connectionId, LocalDateTime date) {
+    public List<TransactionDto> getTransactionsAfter(String connectionId, LocalDate date) {
         syncWithSaltEdge(connectionId);
 
         return transactionRepository.findAllBySaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(connectionId, date)
@@ -57,11 +58,23 @@ public class TransactionService {
                 .block();
 
         if (newDtos != null && !newDtos.isEmpty()) {
-            log.info("Saving {} new transactions for connection {}", newDtos.size(), connectionId);
+            List<String> incomingIds = newDtos.stream()
+                    .map(TransactionDto::getTransactionId)
+                    .toList();
+
+            Set<String> existingIds = transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(incomingIds);
+
             List<TransactionEntity> newEntities = newDtos.stream()
+                    .filter(dto -> !existingIds.contains(dto.getTransactionId()))
                     .map(dto -> mapToEntity(dto, connectionId))
                     .toList();
-            transactionRepository.saveAll(newEntities);
+
+            if (!newEntities.isEmpty()) {
+                log.info("Saving {} actually new transactions for connection {}", newEntities.size(), connectionId);
+                transactionRepository.saveAll(newEntities);
+            } else {
+                log.info("All {} incoming transactions already exist in the database for connection {}", newDtos.size(), connectionId);
+            }
         }
     }
 

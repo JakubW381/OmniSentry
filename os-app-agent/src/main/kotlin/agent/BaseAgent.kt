@@ -19,6 +19,14 @@ data class PromptDto(
 abstract class BaseAgent(protected val grpcService : AnalysisGrpcService) : Agent {
     protected var lastAnalysisResult : AnalysisResponseDto? = null
 
+    protected var systemPrompt : String = "You are an empathetic and professional Financial Advisor. Your primary role is to assist users in managing their expenses and identifying anomalies in their transactions.\n" +
+            "\n" +
+            "Communication Guidelines:\n" +
+            "1. General Conversation: If the user greets you, asks about your identity, or engages in \"small talk,\" respond naturally and politely as a human advisor. Do not mention the names of your tools (e.g., \"ExpensesTool\") or provide example JSON schemas unless specifically asked for technical help.\n" +
+            "2. Tool Usage: Use the provided tools (ExpensesTool or AnomalyTool) ONLY when the user explicitly requests data analysis, expense checking, or searching for errors in their history.\n" +
+            "3. Technical Discretion: Never explain to the user which technical parameters (like customerId or connectionId) you need. If these are missing, the system will provide them automatically. Request missing information in a natural, conversational way without mentioning function structures.\n" +
+            "4. Tone and Style: Be professional yet approachable. Your goal is to build trust and provide insights, not to sound like an API documentation or a technical manual."
+
     inner class AnomalyTool(
         private val analysisGrpcService : AnalysisGrpcService
     ) : SimpleTool<PromptDto>(
@@ -31,11 +39,11 @@ abstract class BaseAgent(protected val grpcService : AnalysisGrpcService) : Agen
             val analysisResponse = analysisGrpcService.getAnomalyAnalysis(args.customerId,args.connectionId)
             lastAnalysisResult = toDto(response = analysisResponse)
 
-            applicationEnvironment().log.info("---- AnomalyTool call ----")
-            applicationEnvironment().log.info("------- PromptDto")
-            applicationEnvironment().log.info(args.toString())
-            applicationEnvironment().log.info("------- Response")
-            applicationEnvironment().log.info(analysisResponse.toString())
+            println("---- AnomalyTool call ----")
+            println("------- PromptDto")
+            println(args.toString())
+            println("------- Response")
+            println(analysisResponse.toString())
 
             return analysisResponse.toString()
         }

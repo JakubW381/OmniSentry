@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -41,7 +42,7 @@ public class TransactionHistoryGrpcService extends AnalyticsDataServiceImplBase 
             }
 
             int months = request.getMonthsLimit() > 0 ? request.getMonthsLimit() : 12;
-            LocalDateTime after = LocalDateTime.now().minusMonths(months);
+            LocalDate after = LocalDate.now().minusMonths(months);
 
             List<Transactions.TransactionDto> historyProto = transactionService
                     .getTransactionsAfter(request.getConnectionId(), after)

@@ -19,5 +19,5 @@ message UserRegistrationResponse {
 }
 
 service UserRegistrationService {
-    rpc RegisterUser (UserRegistrationRequest) returns (UserRegistrationResponse);
+    rpc registerUser (UserRegistrationRequest) returns (UserRegistrationResponse);
 }
