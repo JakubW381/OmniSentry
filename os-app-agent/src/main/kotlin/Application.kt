@@ -66,9 +66,9 @@ val appModule = module {
     single { AnalysisGrpcService(get()) }
 
     if (System.getenv("AGENT_TYPE") == "GROQ") {
-        factory { GroqAgent(get()) }
-    }else{
-        factory { OllamaAgent(get()) }
+        factory<BaseAgent> { GroqAgent(get()) }
+    } else {
+        factory<BaseAgent> { OllamaAgent(get()) }
     }
 }
 

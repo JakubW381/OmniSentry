@@ -52,8 +52,12 @@ class Analyser {
     val data = transactions.map(Extractor.toFeatures).toArray
     val properties = new Properties()
     properties.setProperty("smile.isolation_forest.trees", "100")
-    val rate = Math.min(data.length, 256).toDouble / data.length
-    properties.setProperty("smile.isolation_forest.sampling_rate", rate.toString)
+//    val rate = if (data.length <= 256) {
+//      0.99
+//    } else {
+//      256.0 / data.length
+//    }
+//    properties.setProperty("smile.isolation_forest.sampling_rate", rate.toString)
 
     val model = IsolationForest.fit(data, properties)
     val scores = model.score(data)
@@ -62,7 +66,11 @@ class Analyser {
 
     val visualDataByCurrency = txWithScores.groupBy(_._1.currency).map { case (curr, pairs) =>
       curr -> VisualData(
-        labels = pairs.map(_._1.transactionId.take(8)),
+        labels = pairs.map { case (dto, _) =>
+          val shortDate = dto.madeOn.take(10)
+          val shortDesc = dto.description.take(12)
+          s"$shortDate ($shortDesc...)"
+        },
         values = pairs.map(_._2),
         threshold = threshold
       )

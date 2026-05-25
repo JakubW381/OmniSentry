@@ -45,7 +45,7 @@ abstract class BaseAgent(protected val grpcService : AnalysisGrpcService) : Agen
             println("------- Response")
             println(analysisResponse.toString())
 
-            return analysisResponse.toString()
+            return analysisResponse.summaryForAi.toString()
         }
     }
 
