@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package dev.jakubw.omnisentry.proto.analysis;
 
-import "transactions.proto";
-
 option java_multiple_files = true;
 
 message VisualDataDto {

@@ -1,4 +1,5 @@
 import com.google.protobuf.gradle.*
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -30,16 +31,12 @@ protobuf {
     }
     plugins {
         id("grpc") {
-            val arch = System.getProperty("os.arch")
-            val os = if (System.getProperty("os.name").lowercase().contains("mac")) "osx" else "linux"
-            val classifier = if (arch == "aarch64") "$os-aarch_64" else "$os-x86_64"
-
-            artifact = "io.grpc:protoc-gen-grpc-java:1.62.2:$classifier"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.62.2"
         }
     }
     generateProtoTasks {
-        all().forEach {
-            it.plugins {
+        all().forEach { task ->
+            task.plugins {
                 id("grpc") {}
             }
         }
@@ -48,4 +45,8 @@ protobuf {
 
 kotlin {
     jvmToolchain(21)
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.compilerOptions {
+    freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
 }

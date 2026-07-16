@@ -38,5 +38,6 @@ public class UserEntity {
     private String email;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @Builder.Default
     private Set<String> connectionIds = new HashSet<>();
 }

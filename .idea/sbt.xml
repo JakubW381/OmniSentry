@@ -7,8 +7,8 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$/os-analyser" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/os-analyser" />
-            <option value="$PROJECT_DIR$/os-analyser/project" />
+            <option value="C:\Users\bania\Projects\OmniSentry\os-analyser" />
+            <option value="C:\Users\bania\Projects\OmniSentry\os-analyser\project" />
           </set>
         </option>
         <option name="resolveSbtClassifiers" value="true" />

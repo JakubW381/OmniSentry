@@ -46,8 +46,16 @@ public class TransactionEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
+    @Builder.Default
     private Map<String, Object> extra = Map.of();
 
     @Builder.Default
     private boolean isSuspicious = false;
+
+    @Override
+    public boolean equals(Object obj) {
+        return saltEdgeTransactionId.equals(((TransactionEntity) obj).saltEdgeTransactionId) &&
+                saltEdgeAccountId.equals(((TransactionEntity) obj).saltEdgeAccountId) &&
+                saltEdgeConnectionId.equals(((TransactionEntity) obj).saltEdgeConnectionId);
+    }
 }

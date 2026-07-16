@@ -12,6 +12,5 @@ import java.util.UUID;
 @Repository
 public interface AccountRepository extends JpaRepository<AccountEntity, UUID> {
     List<AccountEntity> findAllByConnectionId(String connectionId);
-
     Optional<AccountEntity> findBySaltEdgeAccountId(String saltEdgeAccountId);
 }

@@ -30,4 +30,9 @@ public class AccountEntity {
 
     private String createdAt;
     private String updatedAt;
+
+    @Override
+    public boolean equals(Object obj) {
+        return saltEdgeAccountId.equals(((AccountEntity) obj).saltEdgeAccountId);
+    }
 }
