@@ -22,7 +22,7 @@ data class ChatResponse(
 class OllamaAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
 
     val localLLama = LLModel(
-        id = "llama3.1:8b-instruct-q4_K_M",
+        id = "qwen3:8b",
         provider = LLMProvider.Ollama,
         capabilities = listOf(
             LLMCapability.Tools,

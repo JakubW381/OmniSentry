@@ -2,6 +2,7 @@ package dev.jakubw.omnisentry.agent
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
+import ai.koog.agents.core.agent.invoke
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
@@ -13,16 +14,22 @@ import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
+import kotlinx.serialization.Serializable
+
+
 
 class GroqAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
 
     val settings = OpenAIClientSettings(baseUrl = "https://api.groq.com/openai/v1")
-    val client = OpenAILLMClient(settings = settings , apiKey = System.getenv("GROQ_API_KEY"))
-    val executer = MultiLLMPromptExecutor(client)
 
+    val client = OpenAILLMClient(settings = settings, apiKey = System.getenv("GROQ_API_KEY"))
+
+    val executor = MultiLLMPromptExecutor(client)
     val groqModel = LLModel(
-        id = "openai/gpt-oss-20b",
         provider = LLMProvider.OpenAI,
+        id = "openai/gpt-oss-20b",
+        contextLength = 131_072,
+        maxOutputTokens = 4096,
         capabilities = listOf(
             LLMCapability.Tools,
             LLMCapability.ToolChoice
@@ -30,7 +37,7 @@ class GroqAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
     )
 
     val agent = AIAgent(
-        promptExecutor = executer,
+        promptExecutor = executor,
         agentConfig = AIAgentConfig(
             prompt(
                 id = "assistant",
@@ -43,11 +50,11 @@ class GroqAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
             model = groqModel,
             maxAgentIterations = 10
         ),
-        toolRegistry = ToolRegistry{
+        toolRegistry = ToolRegistry {
             tool(ExpensesTool(grpcService))
             tool(AnomalyTool(grpcService))
         }
-    ){
+    ) {
         handleEvents {
             onToolCallStarting { toolCall ->
                 println("Tool call starting: ${toolCall.toolName}")

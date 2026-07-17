@@ -18,3 +18,4 @@ app:
   salt-edge:
     app-id: ${APP_ID}
     secret: ${SECRET}
+    base-url: ${SALT_URL}

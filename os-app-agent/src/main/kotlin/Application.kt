@@ -1,15 +1,12 @@
 package dev.jakubw.omnisentry
 
 import com.mongodb.kotlin.client.coroutine.MongoClient
-import dev.jakubw.omnisentry.agent.BaseAgent
-import dev.jakubw.omnisentry.agent.ChatResponse
-import dev.jakubw.omnisentry.agent.GroqAgent
-import dev.jakubw.omnisentry.agent.OllamaAgent
-import dev.jakubw.omnisentry.agent.PromptDto
+import dev.jakubw.omnisentry.agent.*
 import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
-import dev.jakubw.omnisentry.repository.MongoMessageRepository
+import dev.jakubw.omnisentry.repository.*
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 import io.grpc.ManagedChannelBuilder
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -18,43 +15,30 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
+import org.slf4j.LoggerFactory
 
-val appModule = module {
+private val logger = LoggerFactory.getLogger("dev.jakubw.omnisentry.App")
+
+val appModule: Module = module {
+    // gRPC
     single {
         try {
             val grpcHost = System.getenv("GRPC_HOST") ?: "localhost"
             val grpcPort = System.getenv("GRPC_PORT")?.toInt() ?: 9090
-            println("DI: Initializing gRPC Channel to $grpcHost:$grpcPort")
+            logger.info("DI: Initializing gRPC Channel to $grpcHost:$grpcPort")
 
             ManagedChannelBuilder.forAddress(grpcHost, grpcPort)
                 .usePlaintext()
                 .build()
         } catch (e: Exception) {
-            println("DI ERROR: Failed to create gRPC Channel: ${e.message}")
+            logger.error("DI ERROR: Failed to create gRPC Channel: ${e.message}")
             throw e
-        }
-    }
-    val mongo = module {
-        // Client
-        single{
-            val uri = System.getenv("AGENT_DB_URI") ?: "mongodb://localhost:27017"
-            MongoClient.create(uri)
-        }
-        // Database
-        single{
-            val dbName = System.getenv("AGENT_DB_NAME") ?: "omnisentry"
-            val client = get<MongoClient>()
-            client.getDatabase(dbName)
-        }
-
-        // Repository
-        //  --- Messages
-        single {
-            MongoMessageRepository(get())
         }
     }
 
@@ -65,6 +49,22 @@ val appModule = module {
 
     single { AnalysisGrpcService(get()) }
 
+    // MongoDB Configuration
+    single {
+        val uri = System.getenv("AGENT_DB_URI") ?: "mongodb://mongo-db:27017"
+        MongoClient.create(uri)
+    }
+
+    single {
+        val dbName = System.getenv("AGENT_DB_NAME") ?: "omnisentry"
+        val client = get<MongoClient>()
+        client.getDatabase(dbName)
+    }
+
+    single<MessageRepository> {
+        MongoMessageRepository(get())
+    }
+
     if (System.getenv("AGENT_TYPE") == "GROQ") {
         factory<BaseAgent> { GroqAgent(get()) }
     } else {
@@ -73,7 +73,7 @@ val appModule = module {
 }
 
 fun main() {
-    println("Starting OmniSentry AI Agent Server on port 8085...")
+    logger.info("Starting OmniSentry AI Agent Server on port 8085...")
 
     embeddedServer(Netty, port = 8085) {
         install(Koin) {
@@ -87,18 +87,58 @@ fun main() {
                 ignoreUnknownKeys = true
             })
         }
+        val repository by inject<MessageRepository>()
+
+        launch {
+            try {
+                logger.info("Initializing MongoDB indexes...")
+                repository.ensureIndexes()
+                logger.info("MongoDB indexes checked/created successfully.")
+            } catch (e: Exception) {
+                logger.error("Failed to create MongoDB indexes on startup: ${e.message}", e)
+            }
+        }
 
         routing {
-
             post("/ai/message") {
                 val agent by inject<BaseAgent>()
                 try {
                     val prompt = call.receive<PromptDto>()
-                    val response : ChatResponse = agent.chat("message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}")
+                    repository.saveMessage(Message(
+                        customerId = prompt.customerId,
+                        text = prompt.message,
+                        role = MessageRole.USER,
+                        analysis = null
+                    ))
+                    val response: ChatResponse = agent.chat("message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}")
+                    repository.saveMessage(Message(
+                        customerId = prompt.customerId,
+                        text = null,
+                        role = MessageRole.ASSISTANT,
+                        analysis = response
+                    ))
                     call.respond(response)
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    call.respondText("Error: ${e.message}", status = io.ktor.http.HttpStatusCode.InternalServerError)
+                    call.respondText("Error: ${e.message}", status = HttpStatusCode.InternalServerError)
+                }
+            }
+
+            get("/ai/history") {
+                val queryParams = call.request.queryParameters
+
+                val customerId = queryParams["customerId"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing 'customerId' query parameter")
+
+                val rangeInt = queryParams["range"]?.toIntOrNull()
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing or invalid 'range' query parameter")
+
+                val range: IntRange = 0..rangeInt
+
+                try {
+                    val response = repository.getMessages(range, customerId)
+                    call.respond(response)
+                } catch (e: Exception) {
+                    call.respondText("Error: ${e.message}", status = HttpStatusCode.InternalServerError)
                 }
             }
 

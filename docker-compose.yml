@@ -68,6 +68,7 @@ services:
     environment:
       - APP_ID=${SALT_EDGE_APP_ID}
       - SECRET=${SALT_EDGE_API_SECRET}
+      - SALT_URL=${SALT_EDGE_URL}
       - DB_HOST=${MAIN_DB_HOST:-os-main-backend-database}
       - DB_NAME=${MAIN_DB_NAME:-main-db}
       - DB_USER=${MAIN_DB_USER:-admin}
@@ -122,12 +123,14 @@ services:
       - GRPC_HOST=${GRPC_HOST:-os-analyser}
       - GRPC_PORT=${GRPC_PORT:-9093}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://172.17.0.1:11434}
+      - AGENT_TYPE=${AGENT_TYPE}
       - GROQ_API_KEY=${GROQ_API_KEY}
     networks:
       - omnisentry-net
 
   os-app-agent-database:
     container_name: os-app-agent-database
+    hostname: mongo-db
     image: mongo:5.0.10
     restart: always
     environment:

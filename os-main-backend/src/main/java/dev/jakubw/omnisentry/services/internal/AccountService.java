@@ -87,6 +87,4 @@ public class AccountService {
                 entity.getUpdatedAt()
         );
     }
-
-
 }

@@ -7,11 +7,12 @@ import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import dev.jakubw.omnisentry.agent.ChatResponse
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Instant
+import java.time.Instant
 
 data class MessageEntity(
     @BsonId val id: ObjectId = ObjectId(),
@@ -19,7 +20,7 @@ data class MessageEntity(
     val text: String? = "",
     val chatResponse: ChatResponse? = null,
     val role: MessageRole,
-    val timestamp: Instant,
+    val timestamp: Instant = Instant.now(),
 ){
     fun toDto(): Message{
         return Message(
@@ -36,7 +37,7 @@ enum class MessageRole {
     USER, ASSISTANT, SYSTEM
 }
 @Serializable
-data class Message(val customerId : String , val text: String?,val role : MessageRole, val timestamp: Instant, val analysis : ChatResponse?){
+data class Message(val customerId : String, val text: String?, val role : MessageRole, @Contextual val timestamp: Instant = Instant.now(), val analysis : ChatResponse?){
     fun toEntity(): MessageEntity{
         return MessageEntity(
             customerId = customerId,
@@ -56,7 +57,7 @@ class MongoMessageRepository(
     private val collection = database.getCollection<MessageEntity>("messages")
 
 
-    suspend fun ensureIndexes() {
+    override suspend fun ensureIndexes() {
         collection.createIndex(Indexes.ascending("customerId", "timestamp"))
     }
 

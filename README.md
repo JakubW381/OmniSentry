@@ -179,6 +179,7 @@ Create a `.env` file in the repository root when running with Docker Compose.
 
 ```dotenv
 # Salt Edge
+SALT_EDGE_URL=saltedge url with version
 SALT_EDGE_APP_ID=your_app_id
 SALT_EDGE_API_SECRET=your_secret
 
@@ -203,6 +204,7 @@ AUTH_DB_PASSWORD=admin
 OMNISENTRY_RSA_PUBLIC_KEY=base64_public_key
 OMNISENTRY_RSA_PRIVATE_KEY=base64_private_key
 
+AGENT_TYPE=GROQ #else will inject ollama
 GROQ_API_KEY=groq_api_key
 
 AGENT_DB_USER=admin

@@ -37,6 +37,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.testcontainers:junit-jupiter:1.20.1")
     testImplementation("org.testcontainers:postgresql:1.20.1")
+    testImplementation("org.wiremock.integrations:wiremock-spring-boot:4.0.6")
+    testImplementation("io.projectreactor:reactor-test")
+    testImplementation("com.h2database:h2")
 }
 
 configurations.all {
