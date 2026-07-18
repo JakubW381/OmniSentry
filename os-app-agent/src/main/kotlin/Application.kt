@@ -5,6 +5,7 @@ import dev.jakubw.omnisentry.agent.*
 import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
 import dev.jakubw.omnisentry.repository.*
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
+import dev.jakubw.omnisentry.service.ChatService
 import io.grpc.ManagedChannelBuilder
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.*
@@ -26,7 +27,6 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger("dev.jakubw.omnisentry.App")
 
 val appModule: Module = module {
-    // gRPC
     single {
         try {
             val grpcHost = System.getenv("GRPC_HOST") ?: "localhost"
@@ -49,7 +49,6 @@ val appModule: Module = module {
 
     single { AnalysisGrpcService(get()) }
 
-    // MongoDB Configuration
     single {
         val uri = System.getenv("AGENT_DB_URI") ?: "mongodb://mongo-db:27017"
         MongoClient.create(uri)
@@ -66,9 +65,13 @@ val appModule: Module = module {
     }
 
     if (System.getenv("AGENT_TYPE") == "GROQ") {
-        factory<BaseAgent> { GroqAgent(get()) }
+        factory<Agent> { GroqAgent(get()) }
     } else {
-        factory<BaseAgent> { OllamaAgent(get()) }
+        factory<Agent> { OllamaAgent(get()) }
+    }
+
+    factory<ChatService> {
+        ChatService(get(), get())
     }
 }
 
@@ -87,36 +90,27 @@ fun main() {
                 ignoreUnknownKeys = true
             })
         }
-        val repository by inject<MessageRepository>()
 
-        launch {
-            try {
-                logger.info("Initializing MongoDB indexes...")
-                repository.ensureIndexes()
-                logger.info("MongoDB indexes checked/created successfully.")
-            } catch (e: Exception) {
-                logger.error("Failed to create MongoDB indexes on startup: ${e.message}", e)
+        val repository by inject<MessageRepository>()
+        val chatService by inject<ChatService>()
+
+        monitor.subscribe(ApplicationStarted) {
+            launch {
+                try {
+                    logger.info("Initializing MongoDB indexes...")
+                    repository.ensureIndexes()
+                    logger.info("MongoDB indexes checked/created successfully.")
+                } catch (e: Exception) {
+                    logger.error("Failed to create MongoDB indexes on startup: ${e.message}", e)
+                }
             }
         }
 
         routing {
             post("/ai/message") {
-                val agent by inject<BaseAgent>()
                 try {
                     val prompt = call.receive<PromptDto>()
-                    repository.saveMessage(Message(
-                        customerId = prompt.customerId,
-                        text = prompt.message,
-                        role = MessageRole.USER,
-                        analysis = null
-                    ))
-                    val response: ChatResponse = agent.chat("message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}")
-                    repository.saveMessage(Message(
-                        customerId = prompt.customerId,
-                        text = null,
-                        role = MessageRole.ASSISTANT,
-                        analysis = response
-                    ))
+                    val response = chatService.sendPrompt(prompt)
                     call.respond(response)
                 } catch (e: Exception) {
                     call.respondText("Error: ${e.message}", status = HttpStatusCode.InternalServerError)
@@ -135,7 +129,7 @@ fun main() {
                 val range: IntRange = 0..rangeInt
 
                 try {
-                    val response = repository.getMessages(range, customerId)
+                    val response = chatService.getHistory(range, customerId)
                     call.respond(response)
                 } catch (e: Exception) {
                     call.respondText("Error: ${e.message}", status = HttpStatusCode.InternalServerError)

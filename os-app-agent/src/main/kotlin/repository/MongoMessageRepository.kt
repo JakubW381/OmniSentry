@@ -7,7 +7,6 @@ import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import dev.jakubw.omnisentry.agent.ChatResponse
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
@@ -27,7 +26,7 @@ data class MessageEntity(
             customerId = customerId,
             text = text,
             role = role,
-            timestamp = timestamp,
+            timestamp = timestamp.toEpochMilli(),
             analysis = chatResponse
         )
     }
@@ -36,18 +35,24 @@ data class MessageEntity(
 enum class MessageRole {
     USER, ASSISTANT, SYSTEM
 }
+
 @Serializable
-data class Message(val customerId : String, val text: String?, val role : MessageRole, @Contextual val timestamp: Instant = Instant.now(), val analysis : ChatResponse?){
+data class Message(
+    val customerId: String,
+    val text: String?,
+    val role: MessageRole,
+    val timestamp: Long = System.currentTimeMillis(),
+    val analysis: ChatResponse?
+){
     fun toEntity(): MessageEntity{
         return MessageEntity(
             customerId = customerId,
             text = text,
             role = role,
-            timestamp = timestamp,
+            timestamp = Instant.ofEpochMilli(timestamp),
             chatResponse = analysis
         )
     }
-
 }
 
 class MongoMessageRepository(
@@ -55,7 +60,6 @@ class MongoMessageRepository(
 ) : MessageRepository {
 
     private val collection = database.getCollection<MessageEntity>("messages")
-
 
     override suspend fun ensureIndexes() {
         collection.createIndex(Indexes.ascending("customerId", "timestamp"))
@@ -65,10 +69,9 @@ class MongoMessageRepository(
         try {
             withTimeout(2000.milliseconds) {
                 collection.insertOne(message.toEntity())
-
             }
         } catch (e: Exception) {
-            throw RuntimeException("Failed to save message for ${message.customerId}", e) as Throwable
+            throw RuntimeException("Failed to save message for ${message.customerId}", e)
         }
     }
 

@@ -130,7 +130,7 @@ Expected request body:
 }
 ```
 
-The default implementation uses Ollama with `llama3.1:8b-instruct-q4_K_M` and calls the analyser over gRPC through:
+The default implementation uses Ollama with `qwen3:8b` and calls the analyser over gRPC through:
 
 - `ExpensesTool`
 - `AnomalyTool`
