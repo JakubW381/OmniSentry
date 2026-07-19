@@ -89,6 +89,9 @@ HTTP endpoints include:
 - `POST /user/connection/register`
 - `GET /user/connections`
 - `GET /user/accounts?connection_id=...`
+
+CallBacks
+
 - `POST /callbacks/saltedge/success`
 - `POST /callbacks/saltedge/fail`
 - `POST /callbacks/saltedge/destroy`
@@ -119,14 +122,16 @@ Ktor/Kotlin service using Koog agents. It exposes a chat endpoint and gives the 
 Current endpoint:
 
 - `POST /message`
+- `GET /history`
+- `GET /health`
 
 Expected request body:
 
 ```json
 {
+  "message": "Analyze my spending",
   "customerId": "salt-edge-customer-id",
-  "connectionId": "salt-edge-connection-id",
-  "message": "Analyze my spending"
+  "connectionId": "salt-edge-connection-id"
 }
 ```
 
@@ -163,6 +168,15 @@ Shared Kotlin module containing DTOs and `.proto` files for cross-service commun
 - Gradle 9
 - SBT
 
+## Module Metrics
+
+Every module monitors applications using **Java Flight Recorder (JFR)**.
+
+* **Max Profile Size:** `500M`
+* **Output Path:** `/jvm-profiles/<module-name>/`
+
+> **Configuration Note:** You can customize JFR settings dynamically by modifying the environment variables within the main `docker-compose.yml` file.
+
 ## Ports
 
 | Service | HTTP | gRPC | Notes |
@@ -179,7 +193,10 @@ Create a `.env` file in the repository root when running with Docker Compose.
 
 ```dotenv
 # Salt Edge
-SALT_EDGE_URL=saltedge url with version
+SALT_EDGE_URL=saltedge url with version 
+## for stress testing mock saltedge with ./saltedge-mock/docker-compose.yml
+## http://saltedge-mock:8080/api/v6
+
 SALT_EDGE_APP_ID=your_app_id
 SALT_EDGE_API_SECRET=your_secret
 
@@ -241,6 +258,8 @@ http://localhost:8080
 
 ## Running Locally
 
+* This method doesn't include running Your DBs
+
 Build all Gradle modules:
 
 ```bash
@@ -266,7 +285,7 @@ sbt run
 For the AI agent, Ollama must be running locally and the configured model must be available:
 
 ```bash
-ollama pull llama3.1:8b-instruct-q4_K_M
+ollama pull qwen3:8b
 ollama serve
 ```
 
@@ -312,6 +331,7 @@ curl -X POST http://localhost:8085/message \
 
 ## Development Notes
 
+- Remember of some sort of proxy like ngrok to properly talk with SaltEdge API, also the API itself needs registration and configuration
 - `os-analyser` is not included in `settings.gradle.kts`; it is an independent SBT project.
 - Some internal hostnames in code and Docker Compose should be kept aligned before full Compose deployment. For example, gateway routes currently reference service names such as `os-backend` and `os-agent`, while Compose defines `os-main-backend` and `os-app-agent`.
 - `os-app-agent` depends on Koin/Ktor integration when using `install(Koin)`. Make sure `io.insert-koin:koin-ktor` is present and `org.koin.ktor.plugin.Koin` is imported.

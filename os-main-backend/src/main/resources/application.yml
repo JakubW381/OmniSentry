@@ -23,3 +23,19 @@ app:
     secret: ${SECRET}
     base-url: ${SALT_URL}
 
+logging:
+  level:
+    org:
+      springframework:
+        web:
+          reactive:
+            function:
+              client:
+                WebClient: TRACE
+    reactor:
+      netty:
+        http:
+          client:
+            HttpClient: TRACE
+        tcp:
+          TcpClient: TRACE

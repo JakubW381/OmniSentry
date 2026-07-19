@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v6/connections",
+    "headers": {
+
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": "{\n    \"data\": [\n        {\n            \"id\": \"1851844004438612501\",\n            \"customer_id\": \"1851843449968401359\",\n            \"customer_identifier\": \"alakazam@example.com\",\n            \"provider_code\": \"fakebank_oauth_personal_categorization_xf\",\n            \"provider_name\": \"Fake Bank for Testing Personal Categorization\",\n            \"country_code\": \"XF\",\n            \"status\": \"active\",\n            \"categorization\": \"none\",\n            \"automatic_refresh\": true,\n            \"store_credentials\": true,\n            \"next_refresh_possible_at\": null,\n            \"created_at\": \"2026-07-17T13:49:44Z\",\n            \"updated_at\": \"2026-07-17T13:50:04Z\",\n            \"last_consent_id\": \"1851844004648327707\",\n            \"last_attempt\": {\n                \"id\": \"1851844004556053017\",\n                \"consent_id\": \"1851844004648327707\",\n                \"api_version\": \"6\",\n                \"api_mode\": \"service\",\n                \"automatic_fetch\": false,\n                \"categorize\": false,\n                \"custom_fields\": {},\n                \"automatic_refresh\": true,\n                \"exclude_accounts\": [],\n                \"fetch_from_date\": \"2026-05-18\",\n                \"fetch_to_date\": \"2026-07-17\",\n                \"fetch_scopes\": [\n                    \"accounts\",\n                    \"balance\",\n                    \"transactions\"\n                ],\n                \"finished\": true,\n                \"finished_recent\": true,\n                \"include_natures\": null,\n                \"interactive\": false,\n                \"locale\": \"en\",\n                \"partial\": false,\n                \"show_consent_confirmation\": true,\n                \"store_credentials\": true,\n                \"user_present\": true,\n                \"user_agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36\",\n                \"device_type\": \"desktop\",\n                \"remote_ip\": \"37.225.94.100\",\n                \"customer_last_logged_at\": null,\n                \"created_at\": \"2026-07-17T13:49:44Z\",\n                \"updated_at\": \"2026-07-17T13:50:03Z\",\n                \"success_at\": \"2026-07-17T13:50:03Z\",\n                \"fail_at\": null,\n                \"fail_error_class\": null,\n                \"fail_message\": null,\n                \"last_stage\": {\n                    \"id\": \"1851844166842063082\",\n                    \"name\": \"finish\",\n                    \"created_at\": \"2026-07-17T13:50:03Z\",\n                    \"updated_at\": \"2026-07-17T13:50:03Z\"\n                }\n            }\n        }\n    ],\n    \"meta\": {\n        \"next_id\": null,\n        \"next_page\": null\n    }\n}",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

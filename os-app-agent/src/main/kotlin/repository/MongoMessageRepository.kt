@@ -4,7 +4,7 @@ import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import dev.jakubw.omnisentry.agent.ChatResponse
+import dev.jakubw.omnisentry.dto.ChatResponse
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable

@@ -1,4 +1,4 @@
-package dev.jakubw.omnisentry.agent
+package dev.jakubw.omnisentry.agent.implementations
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
@@ -10,15 +10,13 @@ import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
+import dev.jakubw.omnisentry.agent.BaseAgent
+import dev.jakubw.omnisentry.dto.ChatResponse
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 import dev.jakubw.omnisentry.service.AnalysisResponseDto
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class ChatResponse(
-    val message: String,
-    val analysis : AnalysisResponseDto? = null
-)
+
 class OllamaAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
 
     val localLLama = LLModel(
@@ -27,7 +25,9 @@ class OllamaAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
         capabilities = listOf(
             LLMCapability.Tools,
             LLMCapability.ToolChoice
-        )
+        ),
+        contextLength = 131_072,
+        maxOutputTokens = 4096,
     )
 
     val llamaConfig = AIAgentConfig(

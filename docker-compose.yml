@@ -10,9 +10,12 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:StartFlightRecording=settings=profile,disk=true,dumponexit=true,maxsize=500M,filename=/app/profiles/recording.jfr
       - RESOURCE_SERVER_BASE_URL=${RESOURCE_SERVER_BASE_URL:-http://os-authenticator:8081}
     networks:
       - omnisentry-net
+    volumes:
+      - ./jvm-profiles/gateway:/app/profiles
 
   # ------------- AUTHENTICATOR -------------
 
@@ -25,6 +28,7 @@ services:
       os-authenticator-database:
         condition: service_healthy
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:StartFlightRecording=settings=profile,disk=true,dumponexit=true,maxsize=500M,filename=/app/profiles/recording.jfr
       - DB_HOST=${AUTH_DB_HOST:-os-authenticator-database}
       - DB_NAME=${AUTH_DB_NAME:-auth-db}
       - DB_USER=${AUTH_DB_USER:-admin}
@@ -35,6 +39,8 @@ services:
       - "8081:8081"
     networks:
       - omnisentry-net
+    volumes:
+      - ./jvm-profiles/authenticator:/app/profiles
 
   os-authenticator-database:
     container_name: os-authenticator-database
@@ -62,10 +68,12 @@ services:
       dockerfile: os-main-backend/Dockerfile
     ports:
       - "8082:8082"
+      - "9010:9010"
     depends_on:
       os-main-backend-database:
         condition: service_healthy
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:StartFlightRecording=settings=profile,disk=true,dumponexit=true,maxsize=500M,filename=/app/profiles/recording.jfr
       - APP_ID=${SALT_EDGE_APP_ID}
       - SECRET=${SALT_EDGE_API_SECRET}
       - SALT_URL=${SALT_EDGE_URL}
@@ -73,6 +81,8 @@ services:
       - DB_NAME=${MAIN_DB_NAME:-main-db}
       - DB_USER=${MAIN_DB_USER:-admin}
       - DB_PASSWORD=${MAIN_DB_PASSWORD:-admin}
+    volumes:
+      - ./jvm-profiles/main-backend:/app/profiles
     networks:
       - omnisentry-net
 
@@ -105,6 +115,10 @@ services:
       - "9093:9093"
     networks:
       - omnisentry-net
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:StartFlightRecording=settings=profile,disk=true,dumponexit=true,maxsize=500M,filename=/app/profiles/recording.jfr
+    volumes:
+      - ./jvm-profiles/analyser:/app/profiles
 
   # ------------- AGENT -------------
 
@@ -119,14 +133,18 @@ services:
       - os-app-agent-database
       - os-analyser
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:StartFlightRecording=settings=profile,disk=true,dumponexit=true,maxsize=500M,filename=/app/profiles/recording.jfr
       - AGENT_DB_URI=mongodb://${AGENT_DB_USER:-admin}:${AGENT_DB_PASSWORD:-admin}@os-app-agent-database:27017/?authSource=admin
       - GRPC_HOST=${GRPC_HOST:-os-analyser}
       - GRPC_PORT=${GRPC_PORT:-9093}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://172.17.0.1:11434}
       - AGENT_TYPE=${AGENT_TYPE}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     networks:
       - omnisentry-net
+    volumes:
+      - ./jvm-profiles/app-agent:/app/profiles
 
   os-app-agent-database:
     container_name: os-app-agent-database

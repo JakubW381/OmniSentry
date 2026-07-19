@@ -1,8 +1,8 @@
 package dev.jakubw.omnisentry.service
 
 import dev.jakubw.omnisentry.agent.Agent
-import dev.jakubw.omnisentry.agent.ChatResponse
 import dev.jakubw.omnisentry.agent.PromptDto
+import dev.jakubw.omnisentry.dto.ChatResponse
 import dev.jakubw.omnisentry.repository.Message
 import dev.jakubw.omnisentry.repository.MessageRepository
 import dev.jakubw.omnisentry.repository.MessageRole

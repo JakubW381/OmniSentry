@@ -1,8 +1,7 @@
-package dev.jakubw.omnisentry.agent
+package dev.jakubw.omnisentry.agent.implementations
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.agent.invoke
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
@@ -13,9 +12,9 @@ import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
+import dev.jakubw.omnisentry.agent.BaseAgent
+import dev.jakubw.omnisentry.dto.ChatResponse
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
-import kotlinx.serialization.Serializable
-
 
 
 class GroqAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {

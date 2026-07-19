@@ -7,6 +7,7 @@ import dev.jakubw.omnisentry.services.SaltEdgeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
@@ -37,6 +38,7 @@ public class TransactionService {
                 .stream()
                 .map(this::mapToDto)
                 .toList();
+
     }
 
     public List<TransactionDto> getTransactionsAfter(String connectionId, LocalDate date) {
@@ -49,32 +51,42 @@ public class TransactionService {
     }
 
     private void syncWithSaltEdge(String connectionId) {
-        Optional<TransactionEntity> lastTxOpt = transactionRepository.findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId);
+        Optional<TransactionEntity> lastTxOpt =
+                transactionRepository.findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId);
 
         List<TransactionDto> newDtos = lastTxOpt
-                .map(tx -> saltEdgeService.getTransactions(connectionId, Optional.of(tx.getSaltEdgeTransactionId())))
+                .map(tx -> saltEdgeService.getTransactions(
+                        connectionId,
+                        tx.getSaltEdgeTransactionId()
+                ))
                 .orElseGet(() -> saltEdgeService.getTransactions(connectionId))
                 .collectList()
                 .block();
 
-        if (newDtos != null && !newDtos.isEmpty()) {
-            List<String> incomingIds = newDtos.stream()
-                    .map(TransactionDto::getTransactionId)
-                    .toList();
+        if (newDtos == null || newDtos.isEmpty()) {
+            return;
+        }
 
-            Set<String> existingIds = transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(incomingIds);
+        Set<String> existingIds =
+                transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(
+                        newDtos.stream()
+                                .map(TransactionDto::getTransactionId)
+                                .toList()
+                );
 
-            List<TransactionEntity> newEntities = newDtos.stream()
-                    .filter(dto -> !existingIds.contains(dto.getTransactionId()))
-                    .map(dto -> mapToEntity(dto, connectionId))
-                    .toList();
+        List<TransactionEntity> newEntities = newDtos.stream()
+                .filter(dto -> !existingIds.contains(dto.getTransactionId()))
+                .map(dto -> mapToEntity(dto, connectionId))
+                .toList();
 
-            if (!newEntities.isEmpty()) {
-                log.info("Saving {} actually new transactions for connection {}", newEntities.size(), connectionId);
-                transactionRepository.saveAll(newEntities);
-            } else {
-                log.info("All {} incoming transactions already exist in the database for connection {}", newDtos.size(), connectionId);
-            }
+        if (!newEntities.isEmpty()) {
+            log.info(
+                    "Saving {} actually new transactions for connection {}",
+                    newEntities.size(),
+                    connectionId
+            );
+
+            transactionRepository.saveAll(newEntities);
         }
     }
 

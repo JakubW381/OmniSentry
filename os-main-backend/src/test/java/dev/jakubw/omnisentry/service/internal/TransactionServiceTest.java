@@ -63,7 +63,7 @@ class TransactionServiceTest {
         TransactionDto mockDto1 = new TransactionDto(existingTxId, "acc_1", BigDecimal.TEN, "EUR", "Regular tx", "food", "2026-07-16", "OK", Map.of());
         TransactionDto mockDto2 = new TransactionDto(newTxId, "acc_1", BigDecimal.valueOf(25.0), "EUR", "New tx", "rent", "2026-07-17", "OK", Map.of());
 
-        when(saltEdgeService.getTransactions(eq(connectionId), eq(Optional.of(existingTxId))))
+        when(saltEdgeService.getTransactions(eq(connectionId), eq(existingTxId)))
                 .thenReturn(Flux.just(mockDto1, mockDto2));
 
         when(transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(List.of(existingTxId, newTxId)))
@@ -155,7 +155,7 @@ class TransactionServiceTest {
                 .thenReturn(Optional.of(lastDbTx));
 
         TransactionDto mockDto = new TransactionDto(existingTxId, "acc_1", BigDecimal.TEN, "EUR", "Description", "", "2026-07-17", "OK", null);
-        when(saltEdgeService.getTransactions(eq(connectionId), eq(Optional.of(existingTxId))))
+        when(saltEdgeService.getTransactions(eq(connectionId), eq(existingTxId)))
                 .thenReturn(Flux.just(mockDto));
 
         when(transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(List.of(existingTxId)))

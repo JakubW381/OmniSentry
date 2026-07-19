@@ -96,15 +96,22 @@ public class SaltEdgeService {
     }
 
     public Flux<TransactionDto> getTransactions(String connectionId) {
-        return getTransactions(connectionId, Optional.empty());
-    }
-
-    public Flux<TransactionDto> getTransactions(String connectionId, Optional<String> fromId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/transactions")
                         .queryParam("connection_id", connectionId)
-                        .queryParamIfPresent("from_id", fromId)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<List<TransactionDto>>>() {})
+                .flatMapMany(response -> Flux.fromIterable(response.data()));
+    }
+
+    public Flux<TransactionDto> getTransactions(String connectionId, String fromId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/transactions")
+                        .queryParam("connection_id", connectionId)
+                        .queryParam("from_id", fromId)
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<List<TransactionDto>>>() {})

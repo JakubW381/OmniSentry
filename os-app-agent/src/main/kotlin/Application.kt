@@ -2,6 +2,9 @@ package dev.jakubw.omnisentry
 
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import dev.jakubw.omnisentry.agent.*
+import dev.jakubw.omnisentry.agent.implementations.GeminiAgent
+import dev.jakubw.omnisentry.agent.implementations.GroqAgent
+import dev.jakubw.omnisentry.agent.implementations.OllamaAgent
 import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
 import dev.jakubw.omnisentry.repository.*
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
@@ -19,6 +22,7 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.core.module.Module
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
@@ -64,11 +68,20 @@ val appModule: Module = module {
         MongoMessageRepository(get())
     }
 
-    if (System.getenv("AGENT_TYPE") == "GROQ") {
-        factory<Agent> { GroqAgent(get()) }
-    } else {
-        factory<Agent> { OllamaAgent(get()) }
+    factory<Agent>(named("GROQ")) { GroqAgent(get()) }
+    factory<Agent>(named("OLLAMA")) { OllamaAgent(get()) }
+    factory<Agent>(named("GEMINI")) { GeminiAgent(get()) }
+
+    factory<Agent> {
+        val agentType = System.getenv("AGENT_TYPE") ?: "OLLAMA"
+
+        try {
+            get<Agent>(Agent::class, named(agentType))
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Unsupported AGENT_TYPE: $agentType", e)
+        }
     }
+
 
     factory<ChatService> {
         ChatService(get(), get())

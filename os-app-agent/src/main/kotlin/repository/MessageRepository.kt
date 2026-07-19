@@ -1,8 +1,5 @@
 package dev.jakubw.omnisentry.repository
 
-import kotlinx.serialization.Serializable
-import kotlin.time.Instant
-
 
 interface MessageRepository {
         suspend fun ensureIndexes()

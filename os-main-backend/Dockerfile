@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN gradle :os-main-backend:bootJar -x test --no-daemon
+RUN gradle :os-main-backend:clean :os-main-backend:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

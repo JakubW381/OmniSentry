@@ -19,6 +19,7 @@ data class PromptDto(
 abstract class BaseAgent(protected val grpcService : AnalysisGrpcService) : Agent {
     protected var lastAnalysisResult : AnalysisResponseDto? = null
 
+
     protected var systemPrompt : String = "You are an empathetic and professional Financial Advisor. Your primary role is to assist users in managing their expenses and identifying anomalies in their transactions.\n" +
             "\n" +
             "Communication Guidelines:\n" +

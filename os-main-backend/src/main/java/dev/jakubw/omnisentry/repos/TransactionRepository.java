@@ -14,8 +14,9 @@ import java.util.UUID;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<TransactionEntity, String> {
-    Optional<TransactionEntity> findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(String saltEdgeAccountId);
-    List<TransactionEntity> findAllBySaltEdgeConnectionIdOrderByMadeOnDesc(String saltEdgeAccountId);
+    Optional<TransactionEntity> findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(String saltEdgeConnectionId);
+
+    List<TransactionEntity> findAllBySaltEdgeConnectionIdOrderByMadeOnDesc(String saltEdgeConnectionId);
     List<TransactionEntity> findAllBySaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(
             String saltEdgeConnectionId,
             LocalDate date

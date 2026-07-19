@@ -52,12 +52,6 @@ class Analyser {
     val data = transactions.map(Extractor.toFeatures).toArray
     val properties = new Properties()
     properties.setProperty("smile.isolation_forest.trees", "100")
-//    val rate = if (data.length <= 256) {
-//      0.99
-//    } else {
-//      256.0 / data.length
-//    }
-//    properties.setProperty("smile.isolation_forest.sampling_rate", rate.toString)
 
     val model = IsolationForest.fit(data, properties)
     val scores = model.score(data)

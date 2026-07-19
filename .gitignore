@@ -45,3 +45,6 @@ bin/
 .DS_Store
 
 .env
+
+/jvm-profiles/
+/*.jfr

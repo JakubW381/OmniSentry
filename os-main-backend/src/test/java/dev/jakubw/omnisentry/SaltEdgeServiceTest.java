@@ -39,7 +39,6 @@ public class SaltEdgeServiceTest {
     @Autowired
     private SaltEdgeService saltEdgeService;
 
-    // Poprawiony import standardowego Jackson ObjectMappera
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @DynamicPropertySource
@@ -254,7 +253,7 @@ public class SaltEdgeServiceTest {
         );
 
         // When
-        Flux<TransactionDto> transactionsFlux = saltEdgeService.getTransactions(connectionId, Optional.of(fromId));
+        Flux<TransactionDto> transactionsFlux = saltEdgeService.getTransactions(connectionId, fromId);
 
         // Then
         StepVerifier.create(transactionsFlux)

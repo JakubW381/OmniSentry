@@ -1,0 +1,16 @@
+services:
+
+  saltedge-mock:
+    image: wiremock/wiremock:3.6.0
+    ports:
+      - "12000:8080"
+    volumes:
+      - ./mocks:/home/wiremock
+    networks:
+      - omnisentry-net
+    entrypoint: ["/docker-entrypoint.sh", "--global-response-templating", "--verbose"]
+
+networks:
+  omnisentry-net:
+    name: omnisentry_omnisentry-net
+    external: true

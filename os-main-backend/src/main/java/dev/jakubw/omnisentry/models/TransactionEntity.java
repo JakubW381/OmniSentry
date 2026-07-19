@@ -12,7 +12,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "transactions", indexes = {
         @Index(name = "idx_transaction_external_id", columnList = "saltEdgeTransactionId"),
-        @Index(name = "idx_transaction_account_id", columnList = "saltEdgeAccountId")
+        @Index(name = "idx_transaction_account_id", columnList = "saltEdgeAccountId"),
+        @Index(name = "idx_transaction_connection_madeon", columnList = "saltEdgeConnectionId,madeOn")
 })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TransactionEntity {
