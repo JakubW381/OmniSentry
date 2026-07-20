@@ -1,6 +1,5 @@
 package dev.jakubw.omnisentry.service
 
-import dev.jakubw.omnisentry.agent.Agent
 import dev.jakubw.omnisentry.agent.PromptDto
 import dev.jakubw.omnisentry.dto.ChatResponse
 import dev.jakubw.omnisentry.repository.Message
@@ -8,15 +7,13 @@ import dev.jakubw.omnisentry.repository.MessageRepository
 import dev.jakubw.omnisentry.repository.MessageRole
 
 class ChatService(
-    private val repository : MessageRepository,
-    private val agent : Agent
+    private val repository : MessageRepository
 ) {
 
     suspend fun getHistory(range: IntRange, customerId: String) : List<Message>{
         return repository.getMessages(range, customerId);
     }
-
-    suspend fun sendPrompt(prompt: PromptDto) : ChatResponse {
+    suspend fun savePrompt(prompt: PromptDto){
         val message = Message(
             customerId = prompt.customerId,
             text = prompt.message,
@@ -24,17 +21,24 @@ class ChatService(
             analysis = null
         )
         repository.saveMessage(message)
-
-        val response = agent.chat("message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}")
-
+    }
+    suspend fun saveLLMessage(response: ChatResponse, customerId: String){
         val agentMessage = Message(
-            customerId = prompt.customerId,
+            customerId = customerId,
             text = null,
             role = MessageRole.ASSISTANT,
             analysis = response
         )
         repository.saveMessage(agentMessage)
-
-        return response
     }
+    suspend fun saveSystemMessage(response: String, customerId: String){
+        val agentMessage = Message(
+            customerId = customerId,
+            text = response,
+            role = MessageRole.SYSTEM,
+            analysis = null
+        )
+        repository.saveMessage(agentMessage)
+    }
+
 }

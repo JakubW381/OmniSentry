@@ -1,5 +1,6 @@
 package dev.jakubw.omnisentry.config
 
+import org.springframework.boot.restclient.RestClientCustomizer
 import org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions.uri
 import org.springframework.cloud.gateway.server.mvc.filter.FilterFunctions.stripPrefix
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions.route
@@ -7,6 +8,7 @@ import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.htt
 import org.springframework.cloud.gateway.server.mvc.predicate.GatewayRequestPredicates.path
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.servlet.function.*
@@ -14,6 +16,17 @@ import org.springframework.web.servlet.function.*
 @Configuration
 open class GatewayRoutesConfig {
 
+    @Bean
+    open fun gatewayTimeoutConfig(): RestClientCustomizer {
+        return RestClientCustomizer{ builder ->
+            val factory = SimpleClientHttpRequestFactory().apply {
+                setConnectTimeout(10_000)
+                setReadTimeout(300_000)
+            }
+            builder.requestFactory(factory)
+        }
+    }
+    
     @Bean
     open fun gatewayRouting(): RouterFunction<ServerResponse> {
         return route("dev.jakubw.omnisentry.main-backend")

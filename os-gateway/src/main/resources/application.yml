@@ -5,9 +5,32 @@ spring:
   main:
     allow-bean-definition-overriding: true
     web-application-type: servlet
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          streaming-media-types:
+            - "text/event-stream"
 
 security:
   oauth2:
     resourceserver:
       jwt:
         jwk-set-uri: ${RESOURCE_SERVER_BASE_URL:http://os-auth:8081}/.well-known/jwks.json
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    resource-attributes:
+      service.name: os-gateway
+    tracing:
+      export:
+        otlp:
+          endpoint: http://jaeger:4317
+          transport: grpc
+  otlp:
+    metrics:
+      export:
+        enabled: false

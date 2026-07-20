@@ -7,15 +7,14 @@ import proto.analysis.*
 import proto.analysis.analysis.{AnalysisRequest, AnalysisResponse, AnalysisServiceGrpc, VisualDataDto}
 import proto.transactions.*
 
-import io.grpc.ManagedChannelBuilder
+import io.grpc.{Channel, ManagedChannelBuilder}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AnalysisService(host : String , port : Int)(implicit ec : ExecutionContext) extends AnalysisServiceGrpc.AnalysisService {
+class AnalysisService(channel: Channel)(implicit ec : ExecutionContext) extends AnalysisServiceGrpc.AnalysisService {
 
   private final val analyser = new Analyser()
 
-  private val channel = ManagedChannelBuilder.forAddress(host , port).usePlaintext().build()
   private val historyStub = AnalyticsDataServiceGrpc.stub(channel)
 
   override def getExpenseAnalysis(request: AnalysisRequest): Future[AnalysisResponse] = {

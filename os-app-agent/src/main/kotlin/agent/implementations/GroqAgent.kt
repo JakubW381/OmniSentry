@@ -14,10 +14,11 @@ import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
 import dev.jakubw.omnisentry.agent.BaseAgent
 import dev.jakubw.omnisentry.dto.ChatResponse
+import dev.jakubw.omnisentry.dto.StreamEvent
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 
 
-class GroqAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
+class GroqAgent(grpcService: AnalysisGrpcService, onEvent: suspend (StreamEvent) -> Unit) : BaseAgent(grpcService, onEvent) {
 
     val settings = OpenAIClientSettings(baseUrl = "https://api.groq.com/openai/v1")
 
@@ -49,16 +50,9 @@ class GroqAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
             model = groqModel,
             maxAgentIterations = 10
         ),
-        toolRegistry = ToolRegistry {
-            tool(ExpensesTool(grpcService))
-            tool(AnomalyTool(grpcService))
-        }
+        toolRegistry = toolRegistry
     ) {
-        handleEvents {
-            onToolCallStarting { toolCall ->
-                println("Tool call starting: ${toolCall.toolName}")
-            }
-        }
+        configureEventHandler()
     }
 
     override suspend fun chat(message: String): ChatResponse {

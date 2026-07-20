@@ -15,9 +15,10 @@ import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
 import dev.jakubw.omnisentry.agent.BaseAgent
 import dev.jakubw.omnisentry.dto.ChatResponse
+import dev.jakubw.omnisentry.dto.StreamEvent
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 
-class GeminiAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
+class GeminiAgent(grpcService: AnalysisGrpcService, onEvent: suspend (StreamEvent) -> Unit) : BaseAgent(grpcService, onEvent) {
 
     val geminiConfig = AIAgentConfig(
         prompt = prompt(
@@ -35,16 +36,9 @@ class GeminiAgent(grpcService: AnalysisGrpcService) : BaseAgent(grpcService) {
     val agent = AIAgent(
         promptExecutor = simpleGoogleAIExecutor(System.getenv("GEMINI_API_KEY")),
         agentConfig = geminiConfig,
-        toolRegistry = ToolRegistry{
-            tool(ExpensesTool(grpcService))
-            tool(AnomalyTool(grpcService))
-        }
+        toolRegistry = toolRegistry
     ){
-        handleEvents {
-            onToolCallStarting { toolCall ->
-                println("Tool call starting: ${toolCall.toolName}")
-            }
-        }
+        configureEventHandler()
     }
 
     override suspend fun chat(message: String): ChatResponse {

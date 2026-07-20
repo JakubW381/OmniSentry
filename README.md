@@ -286,6 +286,26 @@ For the AI agent, Ollama must be running locally and the configured model must b
 
 ```bash
 ollama pull qwen3:8b
+
+# must serve on 0.0.0.0 to communicate with containers
+set OLLAMA_HOST=0.0.0.0:11434
+
+# recommended envs
+
+# allows up to 4 requests in parallel
+> set OLLAMA_NUM_PARALLEL=4 
+
+# caches static system prompt
+> set OLLAMA_MULTIUSER_CACHE=true
+
+# GPU optimization
+> set OLLAMA_FLASH_ATTENTION=true
+
+# keeps model in GPU Memory,
+# prevents cache from clearing from
+# (by default) 5 minutes of inactivity
+> set OLLAMA_KEEP_ALIVE=-1 
+
 ollama serve
 ```
 

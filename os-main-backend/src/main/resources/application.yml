@@ -39,3 +39,21 @@ logging:
             HttpClient: TRACE
         tcp:
           TcpClient: TRACE
+
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://jaeger:4317
+          transport: grpc
+    resource-attributes:
+      service.name: os-main-backend
+  otlp:
+    metrics:
+      export:
+        enabled: false

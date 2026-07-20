@@ -27,6 +27,10 @@ dependencies {
         exclude(group = "org.springframework.boot")
         exclude(group = "org.springframework.grpc")
     }
+    implementation("io.opentelemetry.instrumentation:opentelemetry-ktor-3.0:2.29.0-alpha")
+    implementation("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.64.0")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.64.0")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-grpc-1.6:2.29.0-alpha")
 
     implementation("io.netty:netty-transport-native-epoll:4.1.115.Final:linux-x86_64")
     implementation("io.netty:netty-all:4.1.115.Final")
@@ -52,6 +56,7 @@ dependencies {
     implementation(platform("io.insert-koin:koin-bom:4.1.1"))
     implementation("io.insert-koin:koin-core")
     implementation("io.insert-koin:koin-ktor")
+
 
     implementation(platform("org.mongodb:mongodb-driver-bom:5.7.0"))
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine")

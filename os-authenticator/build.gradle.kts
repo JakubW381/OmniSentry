@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management")
     id("org.jetbrains.kotlin.plugin.jpa")
     id("com.google.protobuf")
+    kotlin("plugin.lombok")
 }
 
 group = "dev.jakubw.omnisentry"
@@ -23,6 +24,9 @@ dependencies {
 
     implementation("org.springframework.grpc:spring-grpc-spring-boot-starter:1.0.3")
 
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-opentelemetry")
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -37,6 +41,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation(kotlin("test"))
 }
 
 configurations.all {
