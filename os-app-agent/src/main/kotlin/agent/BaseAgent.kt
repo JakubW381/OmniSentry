@@ -21,8 +21,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PromptDto(
-    val customerId: String,
     val connectionId: String,
+    val message: String,
+)
+
+@Serializable
+data class ToolCallRequest(
+    val connectionId: String,
+    val customerId: String,
     val message: String,
 )
 
@@ -80,13 +86,13 @@ abstract class BaseAgent(protected val grpcService : AnalysisGrpcService, protec
 
     inner class AnomalyTool(
         private val analysisGrpcService : AnalysisGrpcService
-    ) : SimpleTool<PromptDto>(
-        argsType = typeToken<PromptDto>(),
+    ) : SimpleTool<ToolCallRequest>(
+        argsType = typeToken<ToolCallRequest>(),
         name = "AnomalyTool",
         description = "Tool used to get financial anomaly analysis of user transactions"
     ) {
 
-        override suspend fun execute(args: PromptDto) : String {
+        override suspend fun execute(args: ToolCallRequest) : String {
             val analysisResponse = analysisGrpcService.getAnomalyAnalysis(args.customerId,args.connectionId)
             lastAnalysisResult = toDto(response = analysisResponse)
             return analysisResponse.summaryForAi.toString()
@@ -95,12 +101,12 @@ abstract class BaseAgent(protected val grpcService : AnalysisGrpcService, protec
 
     inner class ExpensesTool(
         private val analysisGrpcService : AnalysisGrpcService
-    ) : SimpleTool<PromptDto>(
-        argsType = typeToken<PromptDto>(),
+    ) : SimpleTool<ToolCallRequest>(
+        argsType = typeToken<ToolCallRequest>(),
         name = "ExpensesTool",
         description = "Tool used to get financial analysis of user expenses"
     ) {
-        override suspend fun execute(args: PromptDto) : String {
+        override suspend fun execute(args: ToolCallRequest) : String {
             val analysisResponse = analysisGrpcService.getExpenseAnalysis(args.customerId,args.connectionId)
             lastAnalysisResult = toDto(response = analysisResponse)
             return analysisResponse.toString()

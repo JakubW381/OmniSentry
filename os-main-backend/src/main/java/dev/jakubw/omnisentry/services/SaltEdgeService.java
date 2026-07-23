@@ -1,6 +1,7 @@
 package dev.jakubw.omnisentry.services;
 
 import dev.jakubw.omnisentry.dto.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -22,7 +23,7 @@ public class SaltEdgeService {
         this.webClient = webClient;
     }
 
-    public Mono<CustomerDto> createCustomer(String userEmail) {
+    public Optional<CustomerDto> createCustomer(String userEmail) {
         Map<String, Object> payload = Map.of(
                 "data", Map.of("identifier", userEmail)
         );
@@ -37,10 +38,11 @@ public class SaltEdgeService {
                                 .flatMap(errorBody -> Mono.error(new RuntimeException("SaltEdge Error: " + errorBody)))
                 )
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<CustomerDto>>() {})
-                .map(SaltEdgeResponse::data);
+                .map(SaltEdgeResponse::data)
+                .blockOptional();
     }
 
-    public Mono<String> createConnectSession(String customerId, String returnTo) {
+    public String createConnectSession(String customerId, String returnTo) {
         Map<String, Object> payload = Map.of(
                 "data", Map.of(
                         "customer_id", customerId,
@@ -60,10 +62,11 @@ public class SaltEdgeService {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> data = (Map<String, Object>) response.get("data");
                     return (String) data.get("connect_url");
-                });
+                }).blockOptional()
+                .orElseThrow(EntityNotFoundException::new);
     }
 
-    public Flux<AccountDto> getAccounts(String connectionId) {
+    public List<AccountDto> getAccounts(String connectionId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/accounts")
@@ -71,20 +74,23 @@ public class SaltEdgeService {
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<List<AccountDto>>>() {})
-                .flatMapMany(response -> Flux.fromIterable(response.data()));
+                .map(SaltEdgeResponse::data)
+                .blockOptional()
+                .orElseGet(List::of);
     }
 
-    public Mono<ConnectionDto> getConnection(String connectionId) {
+    public Optional<ConnectionDto> getConnection(String connectionId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/connections/" + connectionId)
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<ConnectionDto>>() {})
-                .map(SaltEdgeResponse::data);
+                .map(SaltEdgeResponse::data)
+                .blockOptional();
     }
 
-    public Flux<ConnectionDto> getConnections(String customerId) {
+    public List<ConnectionDto> getConnections(String customerId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/connections")
@@ -92,10 +98,12 @@ public class SaltEdgeService {
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<List<ConnectionDto>>>() {})
-                .flatMapMany(response -> Flux.fromIterable(response.data()));
+                .map(SaltEdgeResponse::data)
+                .blockOptional()
+                .orElseGet(List::of);
     }
 
-    public Flux<TransactionDto> getTransactions(String connectionId) {
+    public List<TransactionDto> getTransactions(String connectionId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/transactions")
@@ -103,10 +111,12 @@ public class SaltEdgeService {
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<List<TransactionDto>>>() {})
-                .flatMapMany(response -> Flux.fromIterable(response.data()));
+                .map(SaltEdgeResponse::data)
+                .blockOptional()
+                .orElseGet(List::of);
     }
 
-    public Flux<TransactionDto> getTransactions(String connectionId, String fromId) {
+    public List<TransactionDto> getTransactions(String connectionId, String fromId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/transactions")
@@ -115,6 +125,8 @@ public class SaltEdgeService {
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<SaltEdgeResponse<List<TransactionDto>>>() {})
-                .flatMapMany(response -> Flux.fromIterable(response.data()));
+                .map(SaltEdgeResponse::data)
+                .blockOptional()
+                .orElseGet(List::of);
     }
 }

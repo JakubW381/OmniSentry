@@ -1,18 +1,18 @@
 package dev.jakubw.omnisentry.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
-@Data
+
 @Entity
+@Getter
+@Setter
+@EqualsAndHashCode(of = "saltEdgeCustomerId")
+@ToString(exclude = "connections")
 @Builder
 @Table(name = "omni_user")
 @NoArgsConstructor
@@ -20,10 +20,8 @@ import java.util.UUID;
 public class UserEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    private String customerId;
+    @Column(unique = true, nullable = false)
+    private String saltEdgeCustomerId;
 
     @Column(unique = true)
     private String username;
@@ -35,7 +33,12 @@ public class UserEntity {
     @Column(unique = true)
     private String email;
 
-    @ElementCollection(fetch = FetchType.EAGER)
     @Builder.Default
-    private Set<String> connectionIds = new HashSet<>();
+    @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true, mappedBy = "user")
+    private Set<ConnectionEntity> connections = new HashSet<>();
+
+    public void addConnection(ConnectionEntity connection){
+        connections.add(connection);
+        connection.setUser(this);
+    }
 }

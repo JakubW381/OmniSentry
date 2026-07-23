@@ -45,7 +45,7 @@ class OllamaAgent(grpcService: AnalysisGrpcService, onEvent: suspend (StreamEven
             System.getenv("OLLAMA_HOST") ?: "http://localhost:11434"
         ),
         agentConfig = llamaConfig,
-        toolRegistry = toolRegistry
+        toolRegistry = toolRegistry,
     ){
         configureEventHandler()
     }

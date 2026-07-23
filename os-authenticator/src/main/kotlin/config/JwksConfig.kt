@@ -16,7 +16,7 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
 @Configuration
-open class JwksConfig{
+class JwksConfig{
 
     @Value($$"${app.rsa.public-key}")
     private lateinit var publicKeyRaw: String
@@ -25,7 +25,7 @@ open class JwksConfig{
     private lateinit var privateKeyRaw: String
 
     @Bean
-    open fun rsaKey(): RSAKey {
+    fun rsaKey(): RSAKey {
         val keyFactory = KeyFactory.getInstance("RSA")
 
         val publicBytes = Base64.getDecoder().decode(publicKeyRaw)
@@ -41,7 +41,7 @@ open class JwksConfig{
     }
 
     @Bean
-    open fun jwkSource(rsaKey: RSAKey): JWKSource<SecurityContext> {
+    fun jwkSource(rsaKey: RSAKey): JWKSource<SecurityContext> {
         val jwkSet = JWKSet(rsaKey)
         return ImmutableJWKSet(jwkSet)
     }

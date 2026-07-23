@@ -1,10 +1,10 @@
 package dev.jakubw.omnisentry.service.internal;
 
-import dev.jakubw.omnisentry.dto.CustomerDto;
 import dev.jakubw.omnisentry.dto.UserDto;
 import dev.jakubw.omnisentry.models.UserEntity;
 import dev.jakubw.omnisentry.repos.UserRepository;
 import dev.jakubw.omnisentry.services.internal.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +35,7 @@ public class UserServiceTest {
         // Given
         String username = "John_Doe";
         UserEntity mockUser = UserEntity.builder()
+                .saltEdgeCustomerId("123")
                 .username(username)
                 .name("John")
                 .surname("Doe")
@@ -60,31 +61,32 @@ public class UserServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> userService.getByUsername(username))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Username not found");
     }
 
     @Test
-    @DisplayName("Should get username and map them to Dto")
+    @DisplayName("Should get customerId and map them to Dto")
     void shouldReturnCorrectUserDto() {
         // Given
-        String username = "john99";
+        String customerId = "123";
         UserEntity mockUser = UserEntity.builder()
-                .username(username)
+                .saltEdgeCustomerId(customerId)
+                .username("john99")
                 .name("John")
                 .surname("Doe")
                 .email("john@doe.com")
                 .dateOfBirth(Instant.ofEpochMilli(LocalDate.of(1999, 5, 12).toEpochDay() * 1000))
                 .build();
 
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(mockUser));
+        when(userRepository.findBySaltEdgeCustomerId(customerId)).thenReturn(Optional.of(mockUser));
 
         // When
-        UserDto result = userService.getUserDto(username);
+        UserDto result = userService.getUserDto(customerId);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getUsername()).isEqualTo(username);
+        assertThat(result.getUsername()).isEqualTo("john99");
         assertThat(result.getName()).isEqualTo("John");
         assertThat(result.getEmail()).isEqualTo("john@doe.com");
     }

@@ -22,9 +22,9 @@ public class UserRepositoryTest extends BaseRepositoryTest{
     public void findByUsernameTest(){
         // Given
         List<UserEntity> testUsers = List.of(
-                UserEntity.builder().username("test").build(),
-                UserEntity.builder().username("321").build(),
-                UserEntity.builder().username("333").build()
+                UserEntity.builder().saltEdgeCustomerId("test").username("test").build(),
+                UserEntity.builder().saltEdgeCustomerId("321").username("321").build(),
+                UserEntity.builder().saltEdgeCustomerId("333").username("333").build()
         );
         userRepository.saveAll(testUsers);
 
@@ -40,27 +40,27 @@ public class UserRepositoryTest extends BaseRepositoryTest{
     public void findByCustomerIdTest(){
         // Given
         List<UserEntity> testUsers = List.of(
-                UserEntity.builder().customerId("123").build(),
-                UserEntity.builder().customerId("321").build(),
-                UserEntity.builder().customerId("333").build()
+                UserEntity.builder().saltEdgeCustomerId("123").build(),
+                UserEntity.builder().saltEdgeCustomerId("321").build(),
+                UserEntity.builder().saltEdgeCustomerId("333").build()
                 );
         userRepository.saveAll(testUsers);
 
         // When
-        Optional<UserEntity> user = userRepository.findByCustomerId("333");
+        Optional<UserEntity> user = userRepository.findBySaltEdgeCustomerId("333");
 
         // Then
         assertTrue(user.isPresent());
-        assertEquals("333",user.get().getCustomerId());
+        assertEquals("333",user.get().getSaltEdgeCustomerId());
     }
     @Test
     @DisplayName("Test find By Email")
     public void findByEmailTest(){
         // Given
         List<UserEntity> testUsers = List.of(
-                UserEntity.builder().email("test@123.com").build(),
-                UserEntity.builder().email("test@321.com").build(),
-                UserEntity.builder().email("test@333.com").build()
+                UserEntity.builder().saltEdgeCustomerId("123").email("test@123.com").build(),
+                UserEntity.builder().saltEdgeCustomerId("321").email("test@321.com").build(),
+                UserEntity.builder().saltEdgeCustomerId("333").email("test@333.com").build()
         );
         userRepository.saveAll(testUsers);
 
@@ -76,9 +76,9 @@ public class UserRepositoryTest extends BaseRepositoryTest{
     public void existsByEmailOrUsernameTest(){
         // Given
         List<UserEntity> testUsers = List.of(
-                UserEntity.builder().username("123").email("test@123.com").build(),
-                UserEntity.builder().username("321").email("test@321.com").build(),
-                UserEntity.builder().username("333").email("test@333.com").build()
+                UserEntity.builder().saltEdgeCustomerId("123").username("123").email("test@123.com").build(),
+                UserEntity.builder().saltEdgeCustomerId("321").username("321").email("test@321.com").build(),
+                UserEntity.builder().saltEdgeCustomerId("333").username("333").email("test@333.com").build()
         );
         userRepository.saveAll(testUsers);
 

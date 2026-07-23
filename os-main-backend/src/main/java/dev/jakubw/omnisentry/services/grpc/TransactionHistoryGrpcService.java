@@ -4,6 +4,7 @@ import dev.jakubw.omnisentry.dto.TransactionDto;
 import dev.jakubw.omnisentry.models.UserEntity;
 import dev.jakubw.omnisentry.proto.AnalyticsDataServiceGrpc.AnalyticsDataServiceImplBase;
 import dev.jakubw.omnisentry.proto.Transactions;
+import dev.jakubw.omnisentry.repos.ConnectionRepository;
 import dev.jakubw.omnisentry.services.internal.TransactionService;
 import dev.jakubw.omnisentry.services.internal.UserService;
 import io.grpc.Status;
@@ -25,13 +26,16 @@ import java.util.Objects;
 public class TransactionHistoryGrpcService extends AnalyticsDataServiceImplBase {
 
     private final TransactionService transactionService;
-    private final UserService userService;
+    private final ConnectionRepository connectionRepository;
 
     @Override
     public void getHistory(Transactions.HistoryRequest request, StreamObserver<Transactions.TransactionList> responseObserver) {
         try {
-            UserEntity user = userService.getUserByCustomerId(request.getCustomerId());
-            if (!user.getConnectionIds().contains(request.getConnectionId())) {
+            boolean isOwner = connectionRepository.existsBySaltEdgeConnectionIdAndUserSaltEdgeCustomerId(
+                    request.getConnectionId(),
+                    request.getCustomerId()
+            );
+            if (!isOwner) {
                 log.warn("Unauthorized access attempt: User {} tried to access connection {}",
                         request.getCustomerId(), request.getConnectionId());
 

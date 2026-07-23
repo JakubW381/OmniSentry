@@ -1,43 +1,32 @@
 package dev.jakubw.omnisentry.model
 
-import jakarta.persistence.CollectionTable
-import jakarta.persistence.Column
-import jakarta.persistence.ElementCollection
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.Table
-import lombok.AllArgsConstructor
-import lombok.NoArgsConstructor
-import java.util.UUID
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "users")
-@NoArgsConstructor
-@AllArgsConstructor
 class UserDetailsEntity(
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID? = null,
 
-    @Column(unique = true, nullable = false)
-    val username: String,
+    @field:Id
+    var id: String = "",
 
-    @Column(unique = true, nullable = false)
-    val email: String,
+    @field:Column(unique = true, nullable = false)
+    var username: String = "",
 
-    @Column(nullable = false)
-    val passwordHash: String,
+    @field:Column(unique = true, nullable = false)
+    var email: String = "",
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
-    @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
-    val roles: Set<Role> = setOf(Role.USER)
-){
-    fun toOmniUserDetails() = OmniUserDetails(id!!, username, passwordHash, roles)
+    @field:Column(nullable = false)
+    var passwordHash: String = "",
+
+    @field:ElementCollection(fetch = FetchType.EAGER)
+    @field:Enumerated(EnumType.STRING)
+    @field:CollectionTable(
+        name = "user_roles",
+        joinColumns = [JoinColumn(name = "user_id")]
+    )
+    @JvmSuppressWildcards
+    var roles: Set<Role> = setOf(Role.USER)
+
+) {
+    fun toOmniUserDetails() = OmniUserDetails(id, username, passwordHash, roles)
 }

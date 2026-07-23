@@ -2,12 +2,15 @@ package dev.jakubw.omnisentry.repository;
 
 
 import dev.jakubw.omnisentry.models.AccountEntity;
+import dev.jakubw.omnisentry.models.ConnectionEntity;
 import dev.jakubw.omnisentry.repos.AccountRepository;
+import dev.jakubw.omnisentry.repos.ConnectionRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,32 +21,27 @@ public class AccountRepositoryTest extends BaseRepositoryTest {
     @Autowired
     private AccountRepository accountRepository;
 
+    @Autowired
+    private ConnectionRepository connectionRepository;
 
     @Test
     @DisplayName("Test findAllByConnectionId")
     public void testFindAllByConnectionId() {
-        List<AccountEntity> mockEntities = List.of(AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).connectionId("123").build(),
-                AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).connectionId("123").build(),
-                AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).connectionId("123").build());
-        accountRepository.saveAll(mockEntities);
+        // Given
+        ConnectionEntity connection = ConnectionEntity.builder().saltEdgeConnectionId("123")
+                .providerName("provider")
+                .providerCode("123123")
+                .status("Cool")
+                .createdAt(Instant.now())
+                .build();
 
-        assertEquals(3, accountRepository.findAllByConnectionId("123").size());
-        assertEquals(accountRepository.findAllByConnectionId("123"), mockEntities);
-    }
-
-    @Test
-    @DisplayName("Test findBySaltEdgeAccountId")
-    public void testFindBySaltEdgeAccountId() {
-        String accountId = UUID.randomUUID().toString();
-        List<AccountEntity> mockEntities = List.of(AccountEntity.builder().saltEdgeAccountId(accountId).build(),
-                AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).build(),
-                AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).build(),
+        List<AccountEntity> mockEntities = List.of(AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).build(),
                 AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).build(),
                 AccountEntity.builder().saltEdgeAccountId(UUID.randomUUID().toString()).build());
-        accountRepository.saveAll(mockEntities);
+        mockEntities.forEach(connection::addAccount);
 
-        assertTrue(accountRepository.findBySaltEdgeAccountId(accountId).isPresent());
-        assertEquals(accountRepository.findBySaltEdgeAccountId(accountId).get().getSaltEdgeAccountId(), accountId);
-        assertEquals(accountRepository.findBySaltEdgeAccountId(accountId).get(), mockEntities.getFirst());
+        connectionRepository.save(connection);
+        // When & Then
+        assertEquals(3, accountRepository.findAllByConnectionSaltEdgeConnectionId("123").size());
     }
 }

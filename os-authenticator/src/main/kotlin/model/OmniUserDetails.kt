@@ -3,10 +3,9 @@ package dev.jakubw.omnisentry.model
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
-import java.util.UUID
 
 data class OmniUserDetails(
-    val id: UUID,
+    val id: String,
     private val username: String,
     private val pass: String,
     val roles: Set<Role>

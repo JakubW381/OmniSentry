@@ -2,14 +2,15 @@ package dev.jakubw.omnisentry.models;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "accounts")
+@EqualsAndHashCode(of = "saltEdgeAccountId")
+@ToString(exclude = "transactions")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class AccountEntity {
 
@@ -17,7 +18,6 @@ public class AccountEntity {
     @Column(unique = true, nullable = false)
     private String saltEdgeAccountId;
 
-    private String connectionId;
     private String name;
     private BigDecimal balance;
     private String currency;
@@ -31,8 +31,16 @@ public class AccountEntity {
     private String createdAt;
     private String updatedAt;
 
-    @Override
-    public boolean equals(Object obj) {
-        return saltEdgeAccountId.equals(((AccountEntity) obj).saltEdgeAccountId);
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "connection_saltEdgeConnectionId")
+    private ConnectionEntity connection;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,orphanRemoval = true, mappedBy = "account")
+    @Builder.Default
+    private List<TransactionEntity> transactions = new ArrayList<>();
+
+    public void addTransaction(TransactionEntity transaction){
+        transactions.add(transaction);
+        transaction.setAccount(this);
     }
 }

@@ -1,10 +1,14 @@
 package dev.jakubw.omnisentry.service.internal;
 
 import dev.jakubw.omnisentry.dto.TransactionDto;
+import dev.jakubw.omnisentry.models.AccountEntity;
+import dev.jakubw.omnisentry.models.ConnectionEntity;
 import dev.jakubw.omnisentry.models.TransactionEntity;
+import dev.jakubw.omnisentry.repos.AccountRepository;
 import dev.jakubw.omnisentry.repos.TransactionRepository;
 import dev.jakubw.omnisentry.services.SaltEdgeService;
 import dev.jakubw.omnisentry.services.internal.TransactionService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +17,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Flux;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,11 +40,38 @@ class TransactionServiceTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private AccountRepository accountRepository;
+
     @InjectMocks
     private TransactionService transactionService;
 
     @Captor
     private ArgumentCaptor<List<TransactionEntity>> savedEntitiesCaptor;
+
+    private AccountEntity mockAccount1;
+    private AccountEntity mockAccount2;
+
+    @BeforeEach
+    void setUp() {
+        ConnectionEntity mockConnection123 = ConnectionEntity.builder()
+                .saltEdgeConnectionId("conn_123")
+                .build();
+
+        ConnectionEntity mockConnection999 = ConnectionEntity.builder()
+                .saltEdgeConnectionId("conn_999")
+                .build();
+
+        mockAccount1 = AccountEntity.builder()
+                .saltEdgeAccountId("acc_1")
+                .connection(mockConnection123)
+                .build();
+
+        mockAccount2 = AccountEntity.builder()
+                .saltEdgeAccountId("acc_2")
+                .connection(mockConnection999)
+                .build();
+    }
 
     @Test
     @DisplayName("Should sync and save only new transactions")
@@ -49,7 +83,7 @@ class TransactionServiceTest {
 
         TransactionEntity lastDbTx = TransactionEntity.builder()
                 .saltEdgeTransactionId(existingTxId)
-                .saltEdgeAccountId("acc_1")
+                .account(mockAccount1)
                 .amount(BigDecimal.TEN)
                 .currency("EUR")
                 .description("Regular tx")
@@ -57,34 +91,38 @@ class TransactionServiceTest {
                 .status("OK")
                 .build();
 
-        when(transactionRepository.findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
+        when(transactionRepository.findFirstByAccountConnectionSaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
                 .thenReturn(Optional.of(lastDbTx));
 
         TransactionDto mockDto1 = new TransactionDto(existingTxId, "acc_1", BigDecimal.TEN, "EUR", "Regular tx", "food", "2026-07-16", "OK", Map.of());
         TransactionDto mockDto2 = new TransactionDto(newTxId, "acc_1", BigDecimal.valueOf(25.0), "EUR", "New tx", "rent", "2026-07-17", "OK", Map.of());
 
         when(saltEdgeService.getTransactions(eq(connectionId), eq(existingTxId)))
-                .thenReturn(Flux.just(mockDto1, mockDto2));
+                .thenReturn(List.of(mockDto1, mockDto2));
 
         when(transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(List.of(existingTxId, newTxId)))
                 .thenReturn(Set.of(existingTxId));
 
+        lenient().when(accountRepository.findById("acc_1"))
+                .thenReturn(Optional.of(mockAccount1));
+
         TransactionEntity newDbEntity = TransactionEntity.builder()
                 .saltEdgeTransactionId(newTxId)
-                .saltEdgeAccountId("acc_1")
-                .saltEdgeConnectionId(connectionId)
+                .account(mockAccount1)
                 .amount(BigDecimal.valueOf(25.0))
                 .currency("EUR")
                 .description("New tx")
+                .category("rent")
                 .madeOn(LocalDate.parse("2026-07-17"))
                 .status("OK")
                 .build();
 
-        when(transactionRepository.findAllBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
-                .thenReturn(List.of(newDbEntity, lastDbTx));
+        // POPRAWKA: Zwracamy PageImpl
+        when(transactionRepository.findAllByAccountConnectionSaltEdgeConnectionId(eq(connectionId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(newDbEntity, lastDbTx)));
 
         // When
-        List<TransactionDto> result = transactionService.getTransactions(connectionId);
+        List<TransactionDto> result = transactionService.getTransactions(connectionId, 1, 10);
 
         // Then
         verify(transactionRepository, times(1)).saveAll(savedEntitiesCaptor.capture());
@@ -105,29 +143,36 @@ class TransactionServiceTest {
         String connectionId = "conn_999";
         String incomingTxId = "tx_brand_new";
 
-        when(transactionRepository.findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
+        when(transactionRepository.findFirstByAccountConnectionSaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
                 .thenReturn(Optional.empty());
 
         TransactionDto incomingDto = new TransactionDto(incomingTxId, "acc_2", BigDecimal.TEN, "EUR", "Cinema", "entertainment", "2026-07-17", "OK", Map.of());
+
         when(saltEdgeService.getTransactions(connectionId))
-                .thenReturn(Flux.just(incomingDto));
+                .thenReturn(List.of(incomingDto));
 
         when(transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(List.of(incomingTxId)))
                 .thenReturn(Collections.emptySet());
 
-        when(transactionRepository.findAllBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
-                .thenReturn(List.of(TransactionEntity.builder()
-                        .saltEdgeTransactionId(incomingTxId)
-                        .saltEdgeAccountId("acc_2")
-                        .amount(BigDecimal.TEN)
-                        .currency("EUR")
-                        .description("Cinema")
-                        .madeOn(LocalDate.now())
-                        .status("OK")
-                        .build()));
+        lenient().when(accountRepository.findById("acc_2"))
+                .thenReturn(Optional.of(mockAccount2));
+
+        TransactionEntity savedEntity = TransactionEntity.builder()
+                .saltEdgeTransactionId(incomingTxId)
+                .account(mockAccount2)
+                .amount(BigDecimal.TEN)
+                .currency("EUR")
+                .description("Cinema")
+                .madeOn(LocalDate.now())
+                .status("OK")
+                .build();
+
+        // POPRAWKA: Zwracamy PageImpl
+        when(transactionRepository.findAllByAccountConnectionSaltEdgeConnectionId(eq(connectionId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(savedEntity)));
 
         // When
-        transactionService.getTransactions(connectionId);
+        transactionService.getTransactions(connectionId, 0, 20);
 
         // Then
         verify(saltEdgeService, times(1)).getTransactions(connectionId);
@@ -138,12 +183,12 @@ class TransactionServiceTest {
     @DisplayName("Should not save anything if all transactions already exist")
     void shouldNotSaveAnythingIfAllTransactionsAlreadyExist() {
         // Given
-        String connectionId = "conn_456";
+        String connectionId = "conn_123";
         String existingTxId = "tx_old";
 
         TransactionEntity lastDbTx = TransactionEntity.builder()
                 .saltEdgeTransactionId(existingTxId)
-                .saltEdgeAccountId("acc_1")
+                .account(mockAccount1)
                 .amount(BigDecimal.TEN)
                 .currency("EUR")
                 .description("Description")
@@ -151,21 +196,23 @@ class TransactionServiceTest {
                 .status("OK")
                 .build();
 
-        when(transactionRepository.findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
+        when(transactionRepository.findFirstByAccountConnectionSaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
                 .thenReturn(Optional.of(lastDbTx));
 
         TransactionDto mockDto = new TransactionDto(existingTxId, "acc_1", BigDecimal.TEN, "EUR", "Description", "", "2026-07-17", "OK", null);
+
         when(saltEdgeService.getTransactions(eq(connectionId), eq(existingTxId)))
-                .thenReturn(Flux.just(mockDto));
+                .thenReturn(List.of(mockDto));
 
         when(transactionRepository.findExistingIdsBySaltEdgeTransactionIdIn(List.of(existingTxId)))
                 .thenReturn(Set.of(existingTxId));
 
-        when(transactionRepository.findAllBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
-                .thenReturn(List.of(lastDbTx));
+        // POPRAWKA: Zwracamy PageImpl
+        when(transactionRepository.findAllByAccountConnectionSaltEdgeConnectionId(eq(connectionId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(lastDbTx)));
 
         // When
-        transactionService.getTransactions(connectionId);
+        transactionService.getTransactions(connectionId, 0, 20);
 
         // Then
         verify(transactionRepository, never()).saveAll(any());
@@ -178,14 +225,16 @@ class TransactionServiceTest {
         String connectionId = "conn_123";
         LocalDate filterDate = LocalDate.now().minusDays(5);
 
-        when(transactionRepository.findFirstBySaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
+        when(transactionRepository.findFirstByAccountConnectionSaltEdgeConnectionIdOrderByMadeOnDesc(connectionId))
                 .thenReturn(Optional.empty());
+
+        // ZMIANA: List.of() zamiast Flux.empty()
         when(saltEdgeService.getTransactions(connectionId))
-                .thenReturn(Flux.empty());
+                .thenReturn(List.of());
 
         TransactionEntity validTx = TransactionEntity.builder()
                 .saltEdgeTransactionId("tx_valid")
-                .saltEdgeAccountId("acc_1")
+                .account(mockAccount1)
                 .amount(BigDecimal.TEN)
                 .currency("EUR")
                 .description("Valid transaction")
@@ -193,7 +242,7 @@ class TransactionServiceTest {
                 .status("OK")
                 .build();
 
-        when(transactionRepository.findAllBySaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(connectionId, filterDate))
+        when(transactionRepository.findAllByAccountConnectionSaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(connectionId, filterDate))
                 .thenReturn(List.of(validTx));
 
         // When
@@ -202,6 +251,6 @@ class TransactionServiceTest {
         // Then
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getTransactionId()).isEqualTo("tx_valid");
-        verify(transactionRepository, times(1)).findAllBySaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(connectionId, filterDate);
+        verify(transactionRepository, times(1)).findAllByAccountConnectionSaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(connectionId, filterDate);
     }
 }

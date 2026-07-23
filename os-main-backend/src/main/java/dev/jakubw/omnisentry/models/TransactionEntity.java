@@ -6,6 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -15,18 +16,13 @@ import java.util.UUID;
         @Index(name = "idx_transaction_account_id", columnList = "saltEdgeAccountId"),
         @Index(name = "idx_transaction_connection_madeon", columnList = "saltEdgeConnectionId,madeOn")
 })
+@EqualsAndHashCode(of = "saltEdgeTransactionId")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TransactionEntity {
 
     @Id
     @Column(unique = true, nullable = false)
     private String saltEdgeTransactionId;
-
-    @Column(nullable = false)
-    private String saltEdgeAccountId;
-
-    @Column(nullable = false)
-    private String saltEdgeConnectionId;
 
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
@@ -48,15 +44,12 @@ public class TransactionEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     @Builder.Default
-    private Map<String, Object> extra = Map.of();
+    private Map<String, Object> extra = new HashMap<>();
 
     @Builder.Default
     private boolean isSuspicious = false;
 
-    @Override
-    public boolean equals(Object obj) {
-        return saltEdgeTransactionId.equals(((TransactionEntity) obj).saltEdgeTransactionId) &&
-                saltEdgeAccountId.equals(((TransactionEntity) obj).saltEdgeAccountId) &&
-                saltEdgeConnectionId.equals(((TransactionEntity) obj).saltEdgeConnectionId);
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_saltEdgeAccountId")
+    private AccountEntity account;
 }

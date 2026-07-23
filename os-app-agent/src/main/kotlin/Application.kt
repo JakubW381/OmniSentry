@@ -1,14 +1,15 @@
 package dev.jakubw.omnisentry
 
-import ai.koog.prompt.dsl.prompt
 import com.mongodb.kotlin.client.coroutine.MongoClient
-import dev.jakubw.omnisentry.agent.*
+import dev.jakubw.omnisentry.agent.Agent
+import dev.jakubw.omnisentry.agent.PromptDto
 import dev.jakubw.omnisentry.agent.implementations.GeminiAgent
 import dev.jakubw.omnisentry.agent.implementations.GroqAgent
 import dev.jakubw.omnisentry.agent.implementations.OllamaAgent
 import dev.jakubw.omnisentry.dto.StreamEvent
 import dev.jakubw.omnisentry.proto.analysis.AnalysisServiceGrpc
-import dev.jakubw.omnisentry.repository.*
+import dev.jakubw.omnisentry.repository.MessageRepository
+import dev.jakubw.omnisentry.repository.MongoMessageRepository
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 import dev.jakubw.omnisentry.service.ChatService
 import dev.jakubw.omnisentry.util.getOpenTelemetry
@@ -22,17 +23,12 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sse.SSE
-import io.ktor.server.sse.send
-import io.ktor.server.sse.sse
-import io.ktor.utils.io.writeStringUtf8
+import io.ktor.utils.io.*
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.instrumentation.grpc.v1_6.GrpcTelemetry
 import io.opentelemetry.instrumentation.ktor.v3_0.KtorServerTelemetry
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
 import org.koin.core.module.Module
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
@@ -147,12 +143,12 @@ fun main() {
                 var customerId: String? = null
                 try {
                     val prompt = call.receive<PromptDto>()
-                    customerId = prompt.customerId
+                    customerId = call.request.headers["X-User-CustomerId"]
 
                     chatService.savePrompt(prompt)
 
                     val noopAgent = get<Agent> { parametersOf(suspend { _: StreamEvent -> }) }
-                    val response = noopAgent.chat("message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}")
+                    val response = noopAgent.chat("message : ${prompt.message}, \n customerId : ${customerId}, \n connectionId : ${prompt.connectionId}")
 
                     chatService.saveLLMessage(response, prompt.message)
                     call.respond(response)
@@ -174,7 +170,7 @@ fun main() {
                 var customerId: String? = null
                 try {
                     val prompt = call.receive<PromptDto>()
-                    customerId = prompt.customerId
+                    customerId = call.request.headers["X-User-CustomerId"]
 
                     chatService.savePrompt(prompt)
 
@@ -198,7 +194,7 @@ fun main() {
                         }
 
                         val response = streamingAgent.chat(
-                            "message : ${prompt.message}, \n customerId : ${prompt.customerId}, \n connectionId : ${prompt.connectionId}"
+                            "message : ${prompt.message}, \n customerId : ${customerId}, \n connectionId : ${prompt.connectionId}"
                         )
 
                         val analysisJson = Json.encodeToString(response.analysis)

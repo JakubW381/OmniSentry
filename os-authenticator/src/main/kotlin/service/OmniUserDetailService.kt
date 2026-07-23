@@ -3,6 +3,7 @@ package dev.jakubw.omnisentry.service
 import com.google.protobuf.Timestamp
 import dev.jakubw.omnisentry.dto.UserRegistrationDto
 import dev.jakubw.omnisentry.grpc.UserRegistrationRequest
+import dev.jakubw.omnisentry.grpc.UserRegistrationResponse
 import dev.jakubw.omnisentry.grpc.UserRegistrationServiceGrpc.UserRegistrationServiceBlockingStub
 import dev.jakubw.omnisentry.model.AuthRequest
 import dev.jakubw.omnisentry.model.Role
@@ -37,16 +38,8 @@ class OmniUserDetailService(
     }
 
     fun register(request: UserRegistrationDto): String {
-        println("Request: " + request.toString())
         val principals = SignUpRequest(request.username, request.pass, request.email)
         validateRegisterRequest(principals)
-
-        val user = UserDetailsEntity(
-            username = request.username,
-            email = request.email,
-            passwordHash = passwordEncoder.encode(request.pass)!!,
-            roles = setOf(Role.USER)
-        )
 
         val grpcRequest = UserRegistrationRequest.newBuilder()
             .setUsername(request.username)
@@ -55,9 +48,9 @@ class OmniUserDetailService(
             .setSurname(request.surname)
             .setDateOfBirth(Timestamp.newBuilder().setSeconds(request.dateOfBirth.epochSecond).setNanos(request.dateOfBirth.nano))
             .build()
-
+        var response : UserRegistrationResponse
         try {
-            val response = stub.registerUser(grpcRequest)
+            response = stub.registerUser(grpcRequest)
             if (!response.result) {
                 throw EntityExistsException("OmniUserDetailService.register ===> " + response.message)
             }
@@ -68,9 +61,15 @@ class OmniUserDetailService(
             e.printStackTrace()
             throw RuntimeException("Could not connect to Main-Backend via gRPC: ${e.message}")
         }
+        val user = UserDetailsEntity(
+            id = response.customerId,
+            username = request.username,
+            email = request.email,
+            passwordHash = passwordEncoder.encode(request.pass)!!,
+            roles = setOf(Role.USER)
+        )
 
         userDetailsRepository.save(user)
-
         return login(AuthRequest(request.username, request.pass))
     }
 

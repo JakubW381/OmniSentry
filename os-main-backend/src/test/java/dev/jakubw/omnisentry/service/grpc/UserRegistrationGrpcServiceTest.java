@@ -16,10 +16,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +63,7 @@ class UserRegistrationGrpcServiceTest {
                 .build();
 
         CustomerDto customerDto = new CustomerDto(customerId,email);
-        when(saltEdgeService.createCustomer(email)).thenReturn(Mono.just(customerDto));
+        when(saltEdgeService.createCustomer(email)).thenReturn(Optional.of(customerDto));
         when(userRepository.existsByEmailOrUsername(email, username)).thenReturn(false);
 
         // When
@@ -74,7 +74,7 @@ class UserRegistrationGrpcServiceTest {
         UserEntity savedUser = userEntityCaptor.getValue();
         assertThat(savedUser.getEmail()).isEqualTo(email);
         assertThat(savedUser.getUsername()).isEqualTo(username);
-        assertThat(savedUser.getCustomerId()).isEqualTo(customerId);
+        assertThat(savedUser.getSaltEdgeCustomerId()).isEqualTo(customerId);
         assertThat(savedUser.getDateOfBirth()).isEqualTo(Instant.ofEpochSecond(946684800, 0));
 
         verify(responseObserver).onNext(responseCaptor.capture());
@@ -95,25 +95,21 @@ class UserRegistrationGrpcServiceTest {
                 .setUsername(username)
                 .build();
 
-        CustomerDto customerDto = new CustomerDto("cust_789",email);
-        when(saltEdgeService.createCustomer(email)).thenReturn(Mono.just(customerDto));
         when(userRepository.existsByEmailOrUsername(email, username)).thenReturn(true);
 
         // When
         userRegistrationGrpcService.registerUser(request, responseObserver);
 
         // Then
-        verify(userRepository, times(1)).save(any(UserEntity.class));
+        verify(userRepository, never()).save(any(UserEntity.class));
 
-        verify(responseObserver, times(2)).onNext(responseCaptor.capture());
-        List<UserRegistrationResponse> responses = responseCaptor.getAllValues();
+        verify(responseObserver, times(1)).onNext(responseCaptor.capture());
+        UserRegistrationResponse response = responseCaptor.getValue();
 
-        assertThat(responses.get(0).getResult()).isFalse();
-        assertThat(responses.get(0).getMessage()).isEqualTo("User with this Email or Username already exists");
+        assertThat(response.getResult()).isFalse();
+        assertThat(response.getMessage()).isEqualTo("User with this Email or Username already exists");
 
-        assertThat(responses.get(1).getResult()).isTrue();
-        assertThat(responses.get(1).getMessage()).isEqualTo("User registered successfully");
-
-        verify(responseObserver, times(2)).onCompleted();
+        verify(responseObserver, times(1)).onCompleted();
+        verify(responseObserver, never()).onError(any());
     }
 }

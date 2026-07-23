@@ -35,18 +35,19 @@ public class UserController {
      *  USER
      */
     @GetMapping
-    public ResponseEntity<UserDto> getUser(@RequestHeader("X-User-Username") String username) {
-        System.out.println("Username Header : " + username);
-        return ResponseEntity.ok(userService.getUserDto(username));
+    public ResponseEntity<UserDto> getUser(@RequestHeader("X-User-CustomerId") String customerId) {
+        return ResponseEntity.ok(userService.getUserDto(customerId));
     }
     /**
      *  TRANSACTIONS
      */
     @GetMapping("/transactions")
     public ResponseEntity<List<TransactionDto>> getTransactions(
-            @RequestParam("connection_id") String connectionId
+            @RequestParam("connection_id") String connectionId,
+            @RequestParam("page") int page,
+            @RequestParam("size") int size
     ) {
-        List<TransactionDto> dtos = transactionService.getTransactions(connectionId);
+        List<TransactionDto> dtos = transactionService.getTransactions(connectionId,page,size);
         return ResponseEntity.ok(dtos);
     }
 
@@ -59,20 +60,18 @@ public class UserController {
     // Generates an connectionMenuURL that answer is sent to SaltEdgeWebhook
     @PostMapping("/connection/register")
     public ResponseEntity<?> registerConnection(
-            @RequestHeader("X-User-Username") String username
+            @RequestHeader("X-User-CustomerId") String customerId
     ) {
-        UserEntity user = userService.getByUsername(username);
-        String sessionUrl = saltEdgeService.createConnectSession(user.getCustomerId(),"http://localhost").block();
+        String sessionUrl = saltEdgeService.createConnectSession(customerId,"http://localhost");
         return ResponseEntity.ok().body(sessionUrl);
     }
 
 
     @GetMapping("/connections")
     public ResponseEntity<List<ConnectionDto>> getConnections(
-            @RequestHeader("X-User-Username") String username
+            @RequestHeader("X-User-CustomerId") String customerId
     ) {
-        UserEntity user = userService.getByUsername(username);
-        List<ConnectionDto> dtos = connectionService.getConnections(user.getCustomerId());
+        List<ConnectionDto> dtos = connectionService.getConnections(customerId);
         return ResponseEntity.ok(dtos);
     }
 

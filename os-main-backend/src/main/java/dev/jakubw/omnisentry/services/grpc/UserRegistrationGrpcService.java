@@ -14,6 +14,7 @@ import org.springframework.grpc.server.service.GrpcService;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Slf4j
 @GrpcService
@@ -26,11 +27,8 @@ public class UserRegistrationGrpcService extends UserRegistrationServiceImplBase
 
     @Override
     public void registerUser(UserRegistrationRequest request, StreamObserver<UserRegistrationResponse> responseObserver) {
-        log.info("Received user registration request: {}", request);
 
-        CustomerDto customerDto = saltEdgeService.createCustomer(request.getEmail()).block();
-
-        if(userRepository.existsByEmailOrUsername(request.getEmail(), request.getUsername())){
+        if (userRepository.existsByEmailOrUsername(request.getEmail(), request.getUsername())) {
             UserRegistrationResponse response = UserRegistrationResponse.newBuilder()
                     .setMessage("User with this Email or Username already exists")
                     .setResult(false)
@@ -38,21 +36,42 @@ public class UserRegistrationGrpcService extends UserRegistrationServiceImplBase
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
+            return;
         }
+
+        Optional<CustomerDto> customerDto = saltEdgeService.createCustomer(request.getEmail());
+
+        if (customerDto.isEmpty()) {
+
+            UserRegistrationResponse response = UserRegistrationResponse.newBuilder()
+                    .setMessage("Failed to create customer account in SaltEdge")
+                    .setResult(false)
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        CustomerDto customer = customerDto.get();
 
         UserEntity userEntity = UserEntity.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .name(request.getName())
                 .surname(request.getSurname())
-                .dateOfBirth(Instant.ofEpochSecond(request.getDateOfBirth().getSeconds(), request.getDateOfBirth().getNanos()))
-                .customerId(customerDto.customerId())
+                .dateOfBirth(Instant.ofEpochSecond(
+                        request.getDateOfBirth().getSeconds(),
+                        request.getDateOfBirth().getNanos()
+                ))
+                .saltEdgeCustomerId(customer.customerId())
                 .build();
 
         userRepository.save(userEntity);
 
         UserRegistrationResponse response = UserRegistrationResponse.newBuilder()
                 .setMessage("User registered successfully")
+                .setCustomerId(customer.customerId())
                 .setResult(true)
                 .build();
 

@@ -57,9 +57,9 @@ open class GatewayRoutesConfig {
             val auth = SecurityContextHolder.getContext().authentication
             if (auth != null && auth.principal is Jwt) {
                 val jwt = auth.principal as Jwt
-                val username = jwt.getClaimAsString("username")
+                val customerId = jwt.getClaimAsString("customerId")
                 val modifiedRequest = ServerRequest.from(request)
-                    .header("X-User-Username", username)
+                    .header("X-User-CustomerId", customerId)
                     .build()
                 next.handle(modifiedRequest)
             } else {

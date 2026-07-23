@@ -13,18 +13,18 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-open class SecurityConfig {
+class SecurityConfig {
 
     @Bean
-    open fun passwordEncoder() : PasswordEncoder = BCryptPasswordEncoder()
+    fun passwordEncoder() : PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    open fun authenticationManager( config : AuthenticationConfiguration ): AuthenticationManager{
+    fun authenticationManager( config : AuthenticationConfiguration ): AuthenticationManager{
         return config.authenticationManager
     }
 
     @Bean
-    open fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf{ it.disable() }
             .cors{ it.disable() }

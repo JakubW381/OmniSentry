@@ -21,7 +21,7 @@ class JwtService(private val rsaKey: RSAKey) {
         val claims = JWTClaimsSet.Builder()
             .issuer("OmniSentry-Auth")
             .subject(userDetails.id.toString())
-            .claim("username", userDetails.username)
+            .claim("customerId", userDetails.id)
             .claim("roles", userDetails.authorities.map { it.authority })
             .issueTime(Date.from(now))
             .expirationTime(Date.from(now.plus(1, ChronoUnit.HOURS)))

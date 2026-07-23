@@ -11,12 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.wiremock.spring.EnableWireMock;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +21,6 @@ import java.util.UUID;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -84,11 +79,11 @@ public class SaltEdgeServiceTest {
         );
 
         // When
-        Mono<CustomerDto> monoDto = saltEdgeService.createCustomer(userEmail);
+        Optional<CustomerDto> resultOpt = saltEdgeService.createCustomer(userEmail);
 
         // Then
-        CustomerDto result = monoDto.block();
-        assertThat(result).isNotNull();
+        assertThat(resultOpt).isPresent();
+        CustomerDto result = resultOpt.get();
         assertThat(result.customerId()).isEqualTo(id);
         assertThat(result.identifier()).isEqualTo(userEmail);
     }
@@ -104,12 +99,12 @@ public class SaltEdgeServiceTest {
                         "customer_id", customerId,
                         "consent", Map.of("scopes", List.of("accounts", "transactions", "holder_info")),
                         "attempt", Map.of("return_to", returnTo),
-                        "automatic_refresh" , true
+                        "automatic_refresh", true
                 )
         );
         String requestJson = objectMapper.writeValueAsString(payload);
 
-        Map<String,Object> responseMap = Map.of(
+        Map<String, Object> responseMap = Map.of(
                 "data", Map.of(
                         "connect_url", someConnectUrl
                 )
@@ -119,19 +114,18 @@ public class SaltEdgeServiceTest {
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/connections/connect"))
                 .withRequestBody(equalToJson(requestJson))
                 .willReturn(WireMock.aResponse()
-                        .withHeader("Content-Type","application/json")
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
                         .withBody(responseJson)
                 )
         );
 
         // When
-        Mono<String> connectionUrlResponse = saltEdgeService.createConnectSession(customerId, returnTo);
+        String connectionUrl = saltEdgeService.createConnectSession(customerId, returnTo);
 
         // Then
-        String responseBody = connectionUrlResponse.block();
-        assertNotNull(responseBody);
-        String id = List.of(responseBody.split("/")).getLast();
-        assertEquals(someConnectUrl, responseBody);
+        String id = List.of(connectionUrl.split("/")).getLast();
+        assertEquals(someConnectUrl, connectionUrl);
         assertEquals(customerId, id);
     }
 
@@ -139,12 +133,11 @@ public class SaltEdgeServiceTest {
     public void shouldGetAccounts() throws JsonProcessingException {
         // Given
         String connectionId = "conn_999";
-        List<Map<String,Object>> accountList = List.of(
-                Map.of("id" ,"123123","connection_id","conn_999","name","Savings", "balance", BigDecimal.ONE,"currency_code","EUR","extra",Map.of("iban","IBAN3123"),"nature","someNature","created_at","someDate","updated_at","someDate"),
-                Map.of("id" ,"321321","connection_id","conn_999","name","Normal", "balance", BigDecimal.ONE,"currency_code","EUR","extra",Map.of("iban","IBAN3123"),"nature","someNature","created_at","someDate","updated_at","someDate"),
-                Map.of("id" ,"333333","connection_id","conn_999","name","Stocks", "balance", BigDecimal.ONE,"currency_code","EUR","extra",Map.of("iban","IBAN3123"),"nature","someNature","updated_at","someDate","created_at","someDate")
+        List<Map<String, Object>> accountList = List.of(
+                Map.of("id", "123123", "connection_id", "conn_999", "name", "Savings", "balance", BigDecimal.ONE, "currency_code", "EUR", "extra", Map.of("iban", "IBAN3123"), "nature", "someNature", "created_at", "someDate", "updated_at", "someDate"),
+                Map.of("id", "321321", "connection_id", "conn_999", "name", "Normal", "balance", BigDecimal.ONE, "currency_code", "EUR", "extra", Map.of("iban", "IBAN3123"), "nature", "someNature", "created_at", "someDate", "updated_at", "someDate"),
+                Map.of("id", "333333", "connection_id", "conn_999", "name", "Stocks", "balance", BigDecimal.ONE, "currency_code", "EUR", "extra", Map.of("iban", "IBAN3123"), "nature", "someNature", "updated_at", "someDate", "created_at", "someDate")
         );
-
 
         Map<String, Object> responseMap = Map.of(
                 "data", accountList
@@ -161,14 +154,13 @@ public class SaltEdgeServiceTest {
         );
 
         // When
-        Flux<AccountDto> accountsFlux = saltEdgeService.getAccounts(connectionId);
+        List<AccountDto> accounts = saltEdgeService.getAccounts(connectionId);
 
         // Then
-        StepVerifier.create(accountsFlux)
-                .assertNext(account -> assertThat(account.getSaltEdgeAccountId()).isEqualTo("123123"))
-                .assertNext(account -> assertThat(account.getSaltEdgeAccountId()).isEqualTo("321321"))
-                .assertNext(account -> assertThat(account.getSaltEdgeAccountId()).isEqualTo("333333"))
-                .verifyComplete();
+        assertThat(accounts).hasSize(3);
+        assertThat(accounts.get(0).getSaltEdgeAccountId()).isEqualTo("123123");
+        assertThat(accounts.get(1).getSaltEdgeAccountId()).isEqualTo("321321");
+        assertThat(accounts.get(2).getSaltEdgeAccountId()).isEqualTo("333333");
     }
 
     @Test
@@ -176,7 +168,7 @@ public class SaltEdgeServiceTest {
         // Given
         String connectionId = "conn_123";
         Map<String, Object> responseMap = Map.of(
-                "data", Map.of("id", connectionId,"customer_id","123","provider_name","Some provider","provider_code","some code", "status", "active", "created_at", "some date", "last_attempt", Map.of())
+                "data", Map.of("id", connectionId, "customer_id", "123", "provider_name", "Some provider", "provider_code", "some code", "status", "active", "created_at", "some date", "last_attempt", Map.of())
         );
         String responseJson = objectMapper.writeValueAsString(responseMap);
 
@@ -189,14 +181,11 @@ public class SaltEdgeServiceTest {
         );
 
         // When
-        Mono<ConnectionDto> connectionMono = saltEdgeService.getConnection(connectionId);
+        Optional<ConnectionDto> connectionOpt = saltEdgeService.getConnection(connectionId);
 
         // Then
-        StepVerifier.create(connectionMono)
-                .assertNext(connection -> {
-                    assertThat(connection.getConnectionId()).isEqualTo(connectionId);
-                })
-                .verifyComplete();
+        assertThat(connectionOpt).isPresent();
+        assertThat(connectionOpt.get().getConnectionId()).isEqualTo(connectionId);
     }
 
     @Test
@@ -205,8 +194,8 @@ public class SaltEdgeServiceTest {
         String customerId = "cust_555";
         Map<String, Object> responseMap = Map.of(
                 "data", List.of(
-                        Map.of("id", "123","customer_id",customerId,"provider_name","Some provider","provider_code","some code", "status", "active", "created_at", "some date", "last_attempt", Map.of()),
-                        Map.of("id", "123","customer_id",customerId,"provider_name","Some provider","provider_code","some code", "status", "active", "created_at", "some date", "last_attempt", Map.of())
+                        Map.of("id", "123", "customer_id", customerId, "provider_name", "Some provider", "provider_code", "some code", "status", "active", "created_at", "some date", "last_attempt", Map.of()),
+                        Map.of("id", "124", "customer_id", customerId, "provider_name", "Some provider", "provider_code", "some code", "status", "active", "created_at", "some date", "last_attempt", Map.of())
                 )
         );
         String responseJson = objectMapper.writeValueAsString(responseMap);
@@ -221,12 +210,10 @@ public class SaltEdgeServiceTest {
         );
 
         // When
-        Flux<ConnectionDto> connectionsFlux = saltEdgeService.getConnections(customerId);
+        List<ConnectionDto> connections = saltEdgeService.getConnections(customerId);
 
         // Then
-        StepVerifier.create(connectionsFlux)
-                .expectNextCount(2)
-                .verifyComplete();
+        assertThat(connections).hasSize(2);
     }
 
     @Test
@@ -237,7 +224,7 @@ public class SaltEdgeServiceTest {
 
         Map<String, Object> responseMap = Map.of(
                 "data", List.of(
-                        Map.of("id", "tx_1","account_id","123", "amount", 100.0,"currency_code","EUR", "description","some desc", "made_on", "today", "status", "active")
+                        Map.of("id", "tx_1", "account_id", "123", "amount", 100.0, "currency_code", "EUR", "description", "some desc", "made_on", "today", "status", "active")
                 )
         );
         String responseJson = objectMapper.writeValueAsString(responseMap);
@@ -253,11 +240,10 @@ public class SaltEdgeServiceTest {
         );
 
         // When
-        Flux<TransactionDto> transactionsFlux = saltEdgeService.getTransactions(connectionId, fromId);
+        List<TransactionDto> transactions = saltEdgeService.getTransactions(connectionId, fromId);
 
         // Then
-        StepVerifier.create(transactionsFlux)
-                .assertNext(tx -> assertThat(tx.getTransactionId()).isEqualTo("tx_1"))
-                .verifyComplete();
+        assertThat(transactions).hasSize(1);
+        assertThat(transactions.getFirst().getTransactionId()).isEqualTo("tx_1");
     }
 }

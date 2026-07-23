@@ -8,13 +8,13 @@ import dev.jakubw.omnisentry.repos.ConnectionRepository;
 import dev.jakubw.omnisentry.repos.TransactionRepository;
 import dev.jakubw.omnisentry.repos.UserRepository;
 import dev.jakubw.omnisentry.services.SaltEdgeService;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -23,56 +23,64 @@ public class ConnectionService {
     private final SaltEdgeService saltEdgeService;
     private final ConnectionRepository connectionRepository;
     private final UserRepository userRepository;
-    private final TransactionRepository transactionRepository;
 
     @Transactional
-    public void saveConnection(String customerId, String connectionId){
-        System.out.println("SaveConnection()");
-        UserEntity user = userRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        System.out.println("Getting connection from saltEdge");
-        ConnectionDto connectionDto = saltEdgeService.getConnection(connectionId).block();
-        System.out.println("Save connection connectionDto: " + connectionDto);
-        ConnectionEntity connection = mapToEntity(Objects.requireNonNull(connectionDto));
-        connection.setCreatedAt(String.valueOf(Instant.now()));
-        ConnectionEntity saved = connectionRepository.save(connection);
-        user.getConnectionIds().add(String.valueOf(saved.getSaltEdgeConnectionId()));
-        userRepository.save(user);
+    public void saveConnection(String customerId, String connectionId) {
+        ConnectionDto connectionDto = saltEdgeService.getConnection(connectionId)
+                .orElseThrow(() -> new EntityNotFoundException("Connection not found in SaltEdge: " + connectionId));
+
+        persistConnection(customerId, connectionDto);
+    }
+
+
+    public void persistConnection(String customerId, ConnectionDto dto) {
+        UserEntity user = userRepository.findBySaltEdgeCustomerId(customerId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with customerId: " + customerId));
+
+        ConnectionEntity connection = mapToEntity(dto, user);
+        connection.setCreatedAt(Instant.now());
+
+        user.getConnections().add(connection);
+
+        connectionRepository.save(connection);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConnectionDto> getConnections(String customerId) {
+        return connectionRepository.findAllByUserSaltEdgeCustomerId(customerId)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
     @Transactional
-    public List<ConnectionDto> getConnections(String customerId){
-        return connectionRepository.findAllByCustomerId(customerId).stream().map(this::mapToDto).toList();
+    public void removeConnection(String customerId, String connectionId) {
+        if (!userRepository.existsBySaltEdgeCustomerId(customerId)) {
+            throw new EntityNotFoundException("User not found with customerId: " + customerId);
+        }
+        connectionRepository.deleteById(connectionId);
     }
 
-    @Transactional
-    public void removeConnection(String customerId, String connectionId){
-        UserEntity user = userRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.getConnectionIds().remove(connectionId);
-        transactionRepository.deleteAllBySaltEdgeConnectionId(connectionId);
-        connectionRepository.deleteBySaltEdgeConnectionId(connectionId);
-        userRepository.save(user);
-    }
-
-    private ConnectionEntity mapToEntity(ConnectionDto dto) {
+    private ConnectionEntity mapToEntity(ConnectionDto dto, UserEntity user) {
+        LastAttemptDto lastAttemptDto = dto.getLastAttempt();
         return ConnectionEntity.builder()
                 .saltEdgeConnectionId(dto.getConnectionId())
-                .customerId(dto.getCustomerId())
+                .user(user)
                 .providerName(dto.getProviderName())
                 .providerCode(dto.getProviderCode())
                 .status(dto.getStatus())
-                .lastDeviceType(dto.getLastAttempt().getDeviceType())
-                .lastRemoteIp(dto.getLastAttempt().getRemoteIp())
+                .lastDeviceType(lastAttemptDto.getDeviceType())
+                .lastRemoteIp(lastAttemptDto.getRemoteIp())
                 .build();
     }
+
     private ConnectionDto mapToDto(ConnectionEntity entity) {
         return new ConnectionDto(
                 entity.getSaltEdgeConnectionId(),
-                entity.getCustomerId(),
+                entity.getUser() != null ? entity.getUser().getSaltEdgeCustomerId() : null ,
                 entity.getProviderName(),
                 entity.getProviderCode(),
-                entity.getCreatedAt(),
+                entity.getCreatedAt().toString(),
                 new LastAttemptDto(
                         entity.getLastDeviceType(),
                         entity.getLastRemoteIp()
@@ -80,5 +88,4 @@ public class ConnectionService {
                 entity.getStatus()
         );
     }
-
 }

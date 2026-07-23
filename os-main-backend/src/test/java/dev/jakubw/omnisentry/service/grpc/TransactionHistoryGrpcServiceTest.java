@@ -1,8 +1,10 @@
 package dev.jakubw.omnisentry.service.grpc;
 
 import dev.jakubw.omnisentry.dto.TransactionDto;
+import dev.jakubw.omnisentry.models.ConnectionEntity;
 import dev.jakubw.omnisentry.models.UserEntity;
 import dev.jakubw.omnisentry.proto.Transactions;
+import dev.jakubw.omnisentry.repos.ConnectionRepository;
 import dev.jakubw.omnisentry.services.grpc.TransactionHistoryGrpcService;
 import dev.jakubw.omnisentry.services.internal.TransactionService;
 import dev.jakubw.omnisentry.services.internal.UserService;
@@ -19,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -35,6 +38,9 @@ class TransactionHistoryGrpcServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ConnectionRepository connectionRepository;
 
     @Mock
     private StreamObserver<Transactions.TransactionList> responseObserver;
@@ -61,12 +67,8 @@ class TransactionHistoryGrpcServiceTest {
                 .setMonthsLimit(3)
                 .build();
 
-        UserEntity user = UserEntity.builder()
-                .customerId(customerId)
-                .connectionIds(Set.of(connectionId))
-                .build();
-
-        when(userService.getUserByCustomerId(customerId)).thenReturn(user);
+        when(connectionRepository.existsBySaltEdgeConnectionIdAndUserSaltEdgeCustomerId(connectionId, customerId))
+                .thenReturn(true);
 
         TransactionDto txDto = new TransactionDto(
                 "tx_001", "acc_1", BigDecimal.TEN, "EUR",
@@ -79,7 +81,7 @@ class TransactionHistoryGrpcServiceTest {
         // When
         grpcService.getHistory(request, responseObserver);
 
-        // Then: 1
+        // Then
         verify(responseObserver, times(1)).onNext(responseCaptor.capture());
         Transactions.TransactionList response = responseCaptor.getValue();
 
@@ -88,7 +90,6 @@ class TransactionHistoryGrpcServiceTest {
         Transactions.TransactionDto protoTx = response.getTransactions(0);
         assertThat(protoProtoTxMatchDto(protoTx, txDto)).isTrue();
 
-        // Then: 2
         verify(responseObserver, times(1)).onCompleted();
         verify(responseObserver, never()).onError(any());
     }
@@ -98,18 +99,25 @@ class TransactionHistoryGrpcServiceTest {
     void shouldReturnPermissionDeniedWhenUnauthorized() {
         // Given
         String customerId = "cust_123";
+        String connectionId = "conn_456";
 
         Transactions.HistoryRequest request = Transactions.HistoryRequest.newBuilder()
                 .setCustomerId(customerId)
                 .setConnectionId("hacker_connection_id")
                 .build();
 
-        UserEntity user = UserEntity.builder()
-                .customerId(customerId)
-                .connectionIds(new HashSet<>())
+        ConnectionEntity connection = ConnectionEntity.builder().saltEdgeConnectionId(connectionId)
+                .providerName("provider")
+                .providerCode("123123")
+                .status("Cool")
+                .createdAt(Instant.now())
                 .build();
 
-        when(userService.getUserByCustomerId(customerId)).thenReturn(user);
+        UserEntity user = UserEntity.builder()
+                .saltEdgeCustomerId(customerId)
+                .build();
+        user.addConnection(connection);
+
 
         // When
         grpcService.getHistory(request, responseObserver);
@@ -132,11 +140,17 @@ class TransactionHistoryGrpcServiceTest {
     void shouldReturnInternalErrorOnException() {
         // Given
         String customerId = "cust_123";
+        String connectionId = "conn_456";
+
         Transactions.HistoryRequest request = Transactions.HistoryRequest.newBuilder()
                 .setCustomerId(customerId)
+                .setConnectionId(connectionId)
                 .build();
 
-        when(userService.getUserByCustomerId(customerId))
+        when(connectionRepository.existsBySaltEdgeConnectionIdAndUserSaltEdgeCustomerId(connectionId, customerId))
+                .thenReturn(true);
+
+        when(transactionService.getTransactionsAfter(eq(connectionId), any(LocalDate.class)))
                 .thenThrow(new RuntimeException("Database timeout"));
 
         // When

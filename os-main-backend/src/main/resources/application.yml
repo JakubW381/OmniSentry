@@ -1,6 +1,9 @@
 server:
   port: 8082
 
+#spring.jpa.properties.hibernate.jdbc.batch_size=50
+#spring.jpa.properties.hibernate.order_inserts=true
+#spring.jpa.properties.hibernate.order_updates=true
 spring:
   threads:
     virtual:
@@ -13,6 +16,12 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        order_updates: true
+        order_inserts: true
+        jdbc:
+          batch_size: 50
   grpc:
     server:
       port: 9092
