@@ -6,6 +6,7 @@ import dev.jakubw.omnisentry.models.TransactionEntity;
 import dev.jakubw.omnisentry.repos.AccountRepository;
 import dev.jakubw.omnisentry.repos.TransactionRepository;
 import dev.jakubw.omnisentry.services.SaltEdgeService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +30,7 @@ public class TransactionService {
     private final AccountRepository accountRepository;
 
     @Transactional
-    public List<TransactionDto> getTransactions(String connectionId, int page, int size) {
+    public List<TransactionDto> getTransactionsByConnection(String connectionId, int page, int size) {
         syncWithSaltEdge(connectionId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("madeOn").descending());
@@ -38,6 +39,20 @@ public class TransactionService {
                 .map(this::mapToDto)
                 .toList();
     }
+
+    @Transactional
+    public List<TransactionDto> getTransactionsByAccount(String accountId, int page, int size) {
+        AccountEntity account = accountRepository.findById(accountId)
+                        .orElseThrow(() -> new EntityNotFoundException("Account not found"));
+        syncWithSaltEdge(account.getConnection().getSaltEdgeConnectionId());
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("madeOn").descending());
+        return transactionRepository.findAllByAccountSaltEdgeAccountId(accountId, pageable)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
 
     @Transactional
     public List<TransactionDto> getTransactionsAfter(String connectionId, LocalDate date) {

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,26 +44,29 @@ public class AccountService {
         ConnectionEntity connection = connectionRepository.findById(connectionId)
                 .orElseThrow(() -> new EntityNotFoundException("Connection not found with id: " + connectionId));
 
-        List<String> accountIds = dtos.stream()
+        Set<String> incomingAccountIds = dtos.stream()
                 .map(AccountDto::getSaltEdgeAccountId)
-                .toList();
+                .collect(Collectors.toSet());
 
-        Map<String, AccountEntity> existingAccountsMap = accountRepository.findAllById(accountIds)
-                .stream()
+        connection.getAccounts().removeIf(account ->
+                !incomingAccountIds.contains(account.getSaltEdgeAccountId())
+        );
+
+        Map<String, AccountEntity> existingAccountsMap = connection.getAccounts().stream()
                 .collect(Collectors.toMap(AccountEntity::getSaltEdgeAccountId, Function.identity()));
 
-        List<AccountEntity> entitiesToSave = dtos.stream()
-                .map(dto -> {
-                    AccountEntity entity = existingAccountsMap.getOrDefault(
-                            dto.getSaltEdgeAccountId(),
-                            mapToEntity(dto, connection)
-                    );
-                    updateEntityFields(entity, dto, connection);
-                    return entity;
-                })
-                .toList();
+        for (AccountDto dto : dtos) {
+            AccountEntity entity = existingAccountsMap.get(dto.getSaltEdgeAccountId());
 
-        accountRepository.saveAll(entitiesToSave);
+            if (entity == null) {
+                AccountEntity newEntity = mapToEntity(dto, connection);
+                updateEntityFields(newEntity, dto, connection);
+
+                connection.addAccount(newEntity);
+            } else {
+                updateEntityFields(entity, dto, connection);
+            }
+        }
     }
 
     private void updateEntityFields(AccountEntity entity, AccountDto dto, ConnectionEntity connection) {

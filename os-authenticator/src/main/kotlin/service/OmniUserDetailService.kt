@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 @Service
@@ -37,6 +38,7 @@ class OmniUserDetailService(
         return jwtService.generateToken(user.toOmniUserDetails())
     }
 
+    @Transactional
     fun register(request: UserRegistrationDto): String {
         val principals = SignUpRequest(request.username, request.pass, request.email)
         validateRegisterRequest(principals)

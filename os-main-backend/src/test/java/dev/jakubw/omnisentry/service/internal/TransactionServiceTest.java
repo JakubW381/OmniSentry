@@ -18,9 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -122,7 +120,7 @@ class TransactionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(newDbEntity, lastDbTx)));
 
         // When
-        List<TransactionDto> result = transactionService.getTransactions(connectionId, 1, 10);
+        List<TransactionDto> result = transactionService.getTransactionsByConnection(connectionId, 1, 10);
 
         // Then
         verify(transactionRepository, times(1)).saveAll(savedEntitiesCaptor.capture());
@@ -172,7 +170,7 @@ class TransactionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(savedEntity)));
 
         // When
-        transactionService.getTransactions(connectionId, 0, 20);
+        transactionService.getTransactionsByConnection(connectionId, 0, 20);
 
         // Then
         verify(saltEdgeService, times(1)).getTransactions(connectionId);
@@ -212,7 +210,7 @@ class TransactionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(lastDbTx)));
 
         // When
-        transactionService.getTransactions(connectionId, 0, 20);
+        transactionService.getTransactionsByConnection(connectionId, 0, 20);
 
         // Then
         verify(transactionRepository, never()).saveAll(any());

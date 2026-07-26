@@ -7,18 +7,18 @@ import jakarta.persistence.*
 class UserDetailsEntity(
 
     @field:Id
-    var id: String = "",
+    var id: String,
 
     @field:Column(unique = true, nullable = false)
-    var username: String = "",
+    var username: String,
 
     @field:Column(unique = true, nullable = false)
-    var email: String = "",
+    var email: String,
 
     @field:Column(nullable = false)
-    var passwordHash: String = "",
+    var passwordHash: String,
 
-    @field:ElementCollection(fetch = FetchType.EAGER)
+    @field:ElementCollection(fetch = FetchType.LAZY)
     @field:Enumerated(EnumType.STRING)
     @field:CollectionTable(
         name = "user_roles",

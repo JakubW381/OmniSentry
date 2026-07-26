@@ -86,6 +86,7 @@ HTTP endpoints include:
 
 - `GET /user`
 - `GET /user/transactions?connection_id=...`
+- `GET /user/transactions?account_id=...`
 - `POST /user/connection/register`
 - `GET /user/connections`
 - `GET /user/accounts?connection_id=...`
@@ -122,6 +123,7 @@ Ktor/Kotlin service using Koog agents. It exposes a chat endpoint and gives the 
 Current endpoint:
 
 - `POST /message`
+- `POST /sse`
 - `GET /history`
 - `GET /health`
 
@@ -130,7 +132,6 @@ Expected request body:
 ```json
 {
   "message": "Analyze my spending",
-  "customerId": "salt-edge-customer-id",
   "connectionId": "salt-edge-connection-id"
 }
 ```
@@ -159,7 +160,7 @@ Shared Kotlin module containing DTOs and `.proto` files for cross-service commun
 - Spring Cloud Gateway MVC
 - Spring gRPC
 - Ktor 3
-- Koog agents
+- Koog agents 1.x
 - Ollama
 - gRPC and Protocol Buffers
 - PostgreSQL
@@ -221,8 +222,10 @@ AUTH_DB_PASSWORD=admin
 OMNISENTRY_RSA_PUBLIC_KEY=base64_public_key
 OMNISENTRY_RSA_PRIVATE_KEY=base64_private_key
 
-AGENT_TYPE=GROQ #else will inject ollama
+AGENT_TYPE=GEMINI #if left empty or OLLAMA will inject OLLAMA
 GROQ_API_KEY=groq_api_key
+GEMINI_API_KEY=gemini_api_key
+OLLAMA_URL=ollama_url
 
 AGENT_DB_USER=admin
 AGENT_DB_PASSWORD=admin

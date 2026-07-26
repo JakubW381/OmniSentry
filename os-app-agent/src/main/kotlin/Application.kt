@@ -1,5 +1,12 @@
 package dev.jakubw.omnisentry
 
+import ai.koog.prompt.executor.clients.google.GoogleLLMClient
+import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
+import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.executor.ollama.client.OllamaClient
+import ai.koog.prompt.llm.LLMProvider
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import dev.jakubw.omnisentry.agent.Agent
 import dev.jakubw.omnisentry.agent.PromptDto
@@ -44,6 +51,32 @@ fun createAppModule(openTelemetry: OpenTelemetry): Module = module {
     single { openTelemetry }
 
     single {
+        val ollamaHost = System.getenv("OLLAMA_URL") ?: "http://host.docker.internal:11434"
+        OllamaClient(baseUrl = ollamaHost)
+    }
+
+    single {
+        val geminiKey = System.getenv("GEMINI_API_KEY") ?: ""
+        GoogleLLMClient(apiKey = geminiKey)
+    }
+
+    single{
+        val groqKey = System.getenv("GROQ_API_KEY") ?:""
+        OpenAILLMClient(groqKey,
+            OpenAIClientSettings( baseUrl = "https://api.groq.com/openai")
+        )
+    }
+
+    single<PromptExecutor> {
+        MultiLLMPromptExecutor(
+            LLMProvider.Ollama to get<OllamaClient>(),
+            LLMProvider.Google to get<GoogleLLMClient>(),
+            LLMProvider.OpenAI to get<OpenAILLMClient>(),
+        )
+    }
+
+    // --- gRPC & DB Configuration ---
+    single {
         val grpcTelemetry = GrpcTelemetry.create(get<OpenTelemetry>())
         val grpcHost = System.getenv("GRPC_HOST") ?: "localhost"
         val grpcPort = System.getenv("GRPC_PORT")?.toInt() ?: 9090
@@ -77,14 +110,15 @@ fun createAppModule(openTelemetry: OpenTelemetry): Module = module {
         MongoMessageRepository(get())
     }
 
+    // --- Agenci ---
     factory<Agent>(named("GROQ")) { (onEvent: suspend (StreamEvent) -> Unit) ->
-        GroqAgent(get(), onEvent)
+        GroqAgent(get(), onEvent,get<PromptExecutor>())
     }
     factory<Agent>(named("OLLAMA")) { (onEvent: suspend (StreamEvent) -> Unit) ->
-        OllamaAgent(get(), onEvent)
+        OllamaAgent(get(), onEvent, get<PromptExecutor>())
     }
     factory<Agent>(named("GEMINI")) { (onEvent: suspend (StreamEvent) -> Unit) ->
-        GeminiAgent(get(), onEvent)
+        GeminiAgent(get(), onEvent, get<PromptExecutor>())
     }
 
     factory<Agent> { (onEvent: suspend (StreamEvent) -> Unit) ->
@@ -145,7 +179,9 @@ fun main() {
                     val prompt = call.receive<PromptDto>()
                     customerId = call.request.headers["X-User-CustomerId"]
 
-                    chatService.savePrompt(prompt)
+                    customerId?.let { id ->
+                        chatService.savePrompt(prompt, id)
+                    }
 
                     val noopAgent = get<Agent> { parametersOf(suspend { _: StreamEvent -> }) }
                     val response = noopAgent.chat("message : ${prompt.message}, \n customerId : ${customerId}, \n connectionId : ${prompt.connectionId}")
@@ -172,23 +208,29 @@ fun main() {
                     val prompt = call.receive<PromptDto>()
                     customerId = call.request.headers["X-User-CustomerId"]
 
-                    chatService.savePrompt(prompt)
+                    customerId?.let { id ->
+                        chatService.savePrompt(prompt, id)
+                    }
 
                     call.response.headers.append(HttpHeaders.ContentType, ContentType.Text.EventStream.toString())
                     call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
                     call.response.headers.append(HttpHeaders.Connection, "keep-alive")
+                    call.response.headers.append("X-Accel-Buffering", "no")
 
                     call.respondBytesWriter {
-
                         writeStringUtf8(": ping\n\n")
                         flush()
 
                         val streamingAgent = get<Agent> {
                             parametersOf(
                                 suspend { event: StreamEvent ->
-                                    val json = Json.encodeToString(StreamEvent.serializer(), event)
-                                    writeStringUtf8("data: $json\n\n")
-                                    flush()
+                                    try {
+                                        val json = Json.encodeToString(StreamEvent.serializer(), event)
+                                        writeStringUtf8("data: $json\n\n")
+                                        flush()
+                                    } catch (e: Exception) {
+                                        logger.error("Error writing SSE frame: ${e.message}")
+                                    }
                                 }
                             )
                         }
@@ -197,9 +239,11 @@ fun main() {
                             "message : ${prompt.message}, \n customerId : ${customerId}, \n connectionId : ${prompt.connectionId}"
                         )
 
-                        val analysisJson = Json.encodeToString(response.analysis)
-                        writeStringUtf8("data: $analysisJson\n\n")
-                        flush()
+                        if (response.analysis != null) {
+                            val analysisJson = Json.encodeToString(response.analysis)
+                            writeStringUtf8("event: analysis\ndata: $analysisJson\n\n")
+                            flush()
+                        }
 
                         chatService.saveLLMessage(response, prompt.message)
                     }
@@ -215,7 +259,9 @@ fun main() {
                         }
                     }
 
-                    call.respondText("Error: ${e.message}", status = HttpStatusCode.InternalServerError)
+                    if (!call.response.isCommitted) {
+                        call.respondText("Error: ${e.message}", status = HttpStatusCode.InternalServerError)
+                    }
                 }
             }
 

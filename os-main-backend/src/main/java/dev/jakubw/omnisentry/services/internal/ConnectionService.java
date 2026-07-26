@@ -37,12 +37,17 @@ public class ConnectionService {
         UserEntity user = userRepository.findBySaltEdgeCustomerId(customerId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with customerId: " + customerId));
 
-        ConnectionEntity connection = mapToEntity(dto, user);
-        connection.setCreatedAt(Instant.now());
-
-        user.getConnections().add(connection);
-
-        connectionRepository.save(connection);
+        user.getConnections().stream()
+                .filter(c -> c.getSaltEdgeConnectionId().equals(dto.getConnectionId()))
+                .findFirst()
+                .ifPresentOrElse(
+                        existingConnection -> updateConnectionFields(existingConnection, dto),
+                        () -> {
+                            ConnectionEntity newConnection = mapToEntity(dto, user);
+                            newConnection.setCreatedAt(Instant.now());
+                            user.addConnection(newConnection);
+                        }
+                );
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +79,7 @@ public class ConnectionService {
                 .build();
     }
 
+
     private ConnectionDto mapToDto(ConnectionEntity entity) {
         return new ConnectionDto(
                 entity.getSaltEdgeConnectionId(),
@@ -87,5 +93,15 @@ public class ConnectionService {
                 ),
                 entity.getStatus()
         );
+    }
+    private void updateConnectionFields(ConnectionEntity connection, ConnectionDto dto) {
+        LastAttemptDto lastAttemptDto = dto.getLastAttempt();
+        connection.setProviderName(dto.getProviderName());
+        connection.setProviderCode(dto.getProviderCode());
+        connection.setStatus(dto.getStatus());
+        if (lastAttemptDto != null) {
+            connection.setLastDeviceType(lastAttemptDto.getDeviceType());
+            connection.setLastRemoteIp(lastAttemptDto.getRemoteIp());
+        }
     }
 }

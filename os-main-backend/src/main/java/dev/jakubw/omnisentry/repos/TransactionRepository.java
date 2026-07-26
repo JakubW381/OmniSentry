@@ -22,6 +22,9 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     Page<TransactionEntity> findAllByAccountConnectionSaltEdgeConnectionId(String saltEdgeConnectionId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"account"})
+    Page<TransactionEntity> findAllByAccountSaltEdgeAccountId(String saltEdgeAccountId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"account"})
     List<TransactionEntity> findAllByAccountConnectionSaltEdgeConnectionIdAndMadeOnAfterOrderByMadeOnDesc(
             String saltEdgeConnectionId,
             LocalDate date

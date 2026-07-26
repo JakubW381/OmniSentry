@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,6 +60,7 @@ class ConnectionServiceTest {
 
             UserEntity user = UserEntity.builder()
                     .saltEdgeCustomerId(customerId)
+                    .connections(new HashSet<>())
                     .build();
 
             when(userRepository.findBySaltEdgeCustomerId(customerId))
@@ -82,8 +84,9 @@ class ConnectionServiceTest {
             connectionService.saveConnection(customerId, connectionId);
 
             // Then
-            verify(connectionRepository).save(connectionEntityCaptor.capture());
-            ConnectionEntity capturedConnection = connectionEntityCaptor.getValue();
+            assertThat(user.getConnections()).hasSize(1);
+
+            ConnectionEntity capturedConnection = user.getConnections().iterator().next();
 
             assertThat(capturedConnection.getSaltEdgeConnectionId()).isEqualTo(connectionId);
             assertThat(capturedConnection.getUser()).isEqualTo(user);
@@ -93,8 +96,6 @@ class ConnectionServiceTest {
             assertThat(capturedConnection.getLastDeviceType()).isEqualTo("desktop");
             assertThat(capturedConnection.getLastRemoteIp()).isEqualTo("192.168.1.1");
             assertThat(capturedConnection.getCreatedAt()).isNotNull();
-
-            assertThat(user.getConnections()).contains(capturedConnection);
         }
 
         @Test

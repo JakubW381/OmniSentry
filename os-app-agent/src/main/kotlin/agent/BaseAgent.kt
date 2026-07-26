@@ -1,22 +1,27 @@
 package dev.jakubw.omnisentry.agent
 
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.agent.FunctionalAIAgent
 import ai.koog.agents.core.agent.GraphAIAgent
+import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.tools.SimpleTool
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.features.eventHandler.feature.EventHandlerConfig
+import ai.koog.agents.ext.agent.reActStrategy
 import ai.koog.agents.features.eventHandler.feature.handleEvents
+import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.MessagePart
 import ai.koog.prompt.streaming.StreamFrame
+import ai.koog.prompt.streaming.StreamFrameFlowBuilder
+import ai.koog.prompt.streaming.collectText
 import ai.koog.serialization.typeToken
-import dev.jakubw.omnisentry.dto.ChatResponse
 import dev.jakubw.omnisentry.dto.StreamEvent
 import dev.jakubw.omnisentry.dto.TokenType
 import dev.jakubw.omnisentry.proto.analysis.AnalysisResponse
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 import dev.jakubw.omnisentry.service.AnalysisResponseDto
 import dev.jakubw.omnisentry.service.VisualDataDto
-import io.ktor.server.engine.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -32,7 +37,7 @@ data class ToolCallRequest(
     val message: String,
 )
 
-abstract class BaseAgent(protected val grpcService : AnalysisGrpcService, protected val onEvent: (suspend(StreamEvent) -> Unit)) : Agent {
+abstract class BaseAgent(protected val grpcService : AnalysisGrpcService, protected val onEvent: (suspend(StreamEvent) -> Unit), protected val promptExecutor : PromptExecutor) : Agent {
     protected var lastAnalysisResult : AnalysisResponseDto? = null
 
     protected var systemPrompt : String = "You are an empathetic and professional Financial Advisor. Your primary role is to assist users in managing their expenses and identifying anomalies in their transactions.\n" +
@@ -47,6 +52,21 @@ abstract class BaseAgent(protected val grpcService : AnalysisGrpcService, protec
         tool(ExpensesTool(grpcService))
         tool(AnomalyTool(grpcService))
     }
+
+    protected val streamingStrategy = strategy<String, String>("streaming-strategy") {
+        val nodeSendInput by nodeLLMRequestStreaming()
+        val nodeExecuteTool by nodeExecuteTools()
+        val nodeSendToolResult by nodeLLMSendToolResultsStreaming()
+
+        edge(nodeStart forwardTo nodeSendInput)
+        edge(nodeSendInput forwardTo nodeExecuteTool onToolCalls { true })
+        edge(nodeSendInput forwardTo nodeFinish transformed {it.collectText() })
+        edge(nodeExecuteTool forwardTo nodeSendToolResult)
+        edge(nodeSendToolResult forwardTo nodeExecuteTool onToolCalls { true })
+        edge(nodeSendToolResult forwardTo nodeFinish onTextMessage { true })
+    }
+
+
 
     protected fun GraphAIAgent.FeatureContext.configureEventHandler(){
         handleEvents {
@@ -63,20 +83,12 @@ abstract class BaseAgent(protected val grpcService : AnalysisGrpcService, protec
             onLLMStreamingFrameReceived { context ->
                 when (val frame = context.streamFrame) {
                     is StreamFrame.TextDelta -> {
-                        if (frame.text.isNotEmpty()) {
-                            onEvent(StreamEvent.Token(TokenType.TEXT, frame.text))
-                        }
+                        println("RECEIVED FROM KOOG: ${frame.text}")
+                        onEvent(StreamEvent.Token(TokenType.TEXT, frame.text))
                     }
                     is StreamFrame.ReasoningDelta -> {
-                        val thinkText = frame.text ?: frame.summary
-                        if (!thinkText.isNullOrEmpty()) {
-                            onEvent(StreamEvent.Token(TokenType.REASONING, thinkText))
-                        }
-                    }
-                    is StreamFrame.ToolCallDelta -> {
-                        frame.content?.let { content ->
-                            onEvent(StreamEvent.Token(TokenType.TOOL, content))
-                        }
+                        println("REASONING FROM KOOG: ${frame.text}")
+                        frame.text?.let { onEvent(StreamEvent.Token(TokenType.REASONING, it)) }
                     }
                     else -> {}
                 }

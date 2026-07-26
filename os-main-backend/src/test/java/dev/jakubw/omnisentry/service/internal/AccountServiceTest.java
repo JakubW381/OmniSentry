@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,9 +43,6 @@ public class AccountServiceTest {
     @InjectMocks
     private AccountService accountService;
 
-    @Captor
-    private ArgumentCaptor<List<AccountEntity>> accEntityListCaptor;
-
     @Test
     @DisplayName("Should save new account when it does not exist")
     public void shouldSaveNotExistingAccount() {
@@ -53,6 +51,7 @@ public class AccountServiceTest {
 
         ConnectionEntity connection = ConnectionEntity.builder()
                 .saltEdgeConnectionId(id)
+                .accounts(new HashSet<>())
                 .build();
 
         AccountExtraDto extraDto = new AccountExtraDto("IBAN123", "BBAN123", "active", "John");
@@ -86,7 +85,6 @@ public class AccountServiceTest {
 
         when(connectionRepository.findById(id)).thenReturn(Optional.of(connection));
         when(saltEdgeService.getAccounts(id)).thenReturn(List.of(newAccount));
-        when(accountRepository.findAllById(List.of(id))).thenReturn(Collections.emptyList());
 
         when(accountRepository.findAllByConnectionSaltEdgeConnectionId(id)).thenReturn(List.of(savedEntity));
 
@@ -94,15 +92,13 @@ public class AccountServiceTest {
         List<AccountDto> dtoList = accountService.getAccounts(id);
 
         // Then
-        verify(accountRepository).saveAll(accEntityListCaptor.capture());
+        assertThat(connection.getAccounts()).hasSize(1);
 
-        List<AccountEntity> savedEntities = accEntityListCaptor.getValue();
-        assertThat(savedEntities).hasSize(1);
-
-        AccountEntity captured = savedEntities.get(0);
-        assertThat(captured.getSaltEdgeAccountId()).isEqualTo(newAccount.getSaltEdgeAccountId());
-        assertThat(captured.getStatus()).isEqualTo("active");
-        assertThat(captured.getHolderName()).isEqualTo("John");
+        AccountEntity addedAccount = connection.getAccounts().iterator().next();
+        assertThat(addedAccount.getSaltEdgeAccountId()).isEqualTo(newAccount.getSaltEdgeAccountId());
+        assertThat(addedAccount.getStatus()).isEqualTo("active");
+        assertThat(addedAccount.getHolderName()).isEqualTo("John");
+        assertThat(addedAccount.getConnection()).isEqualTo(connection);
 
         assertThat(dtoList).hasSize(1);
         assertThat(dtoList.get(0).getSaltEdgeAccountId()).isEqualTo(id);

@@ -2,23 +2,29 @@ package dev.jakubw.omnisentry.agent.implementations
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.google.GoogleModels
-import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
-import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
-import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
-import ai.koog.prompt.llm.LLMCapability
-import ai.koog.prompt.llm.LLMProvider
-import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.streaming.collectText
 import dev.jakubw.omnisentry.agent.BaseAgent
 import dev.jakubw.omnisentry.dto.ChatResponse
 import dev.jakubw.omnisentry.dto.StreamEvent
 import dev.jakubw.omnisentry.service.AnalysisGrpcService
 
-class GeminiAgent(grpcService: AnalysisGrpcService, onEvent: suspend (StreamEvent) -> Unit) : BaseAgent(grpcService, onEvent) {
+
+/**
+ * Works perfectly with default (non-streaming) strategy /message
+ */
+
+
+class GeminiAgent(grpcService: AnalysisGrpcService,
+                  onEvent: suspend (StreamEvent) -> Unit,
+                  promptExecutor: PromptExecutor
+) : BaseAgent(grpcService,
+    onEvent,
+    promptExecutor
+) {
 
     val geminiConfig = AIAgentConfig(
         prompt = prompt(
@@ -34,9 +40,10 @@ class GeminiAgent(grpcService: AnalysisGrpcService, onEvent: suspend (StreamEven
     )
 
     val agent = AIAgent(
-        promptExecutor = simpleGoogleAIExecutor(System.getenv("GEMINI_API_KEY")),
+        promptExecutor = promptExecutor,
         agentConfig = geminiConfig,
-        toolRegistry = toolRegistry
+        toolRegistry = toolRegistry,
+//        strategy = streamingStrategy
     ){
         configureEventHandler()
     }

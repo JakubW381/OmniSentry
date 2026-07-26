@@ -13,9 +13,9 @@ class ChatService(
     suspend fun getHistory(range: IntRange, customerId: String) : List<Message>{
         return repository.getMessages(range, customerId);
     }
-    suspend fun savePrompt(prompt: PromptDto){
+    suspend fun savePrompt(prompt: PromptDto, customerId: String) {
         val message = Message(
-            customerId = prompt.customerId,
+            customerId = customerId,
             text = prompt.message,
             role = MessageRole.USER,
             analysis = null

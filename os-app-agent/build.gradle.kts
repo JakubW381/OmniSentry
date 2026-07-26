@@ -36,7 +36,15 @@ dependencies {
     implementation("io.netty:netty-all:4.1.115.Final")
 
     implementation(kotlin("reflect"))
-    implementation("ai.koog:koog-agents:0.7.1")
+
+    implementation("ai.koog:agents-core:1.1.1")
+    implementation("ai.koog:agents-ext:1.1.1-beta")
+    implementation("ai.koog:agents-features-event-handler:1.1.1")
+
+    implementation("ai.koog:prompt-executor-google-client:1.1.1-beta")
+    implementation("ai.koog:prompt-executor-ollama-client:1.1.1")
+    runtimeOnly("ai.koog:prompt-executor-openai-client:1.1.1")
+    implementation("ai.koog:koog-ktor-jvm:1.1.1-beta")
 
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")

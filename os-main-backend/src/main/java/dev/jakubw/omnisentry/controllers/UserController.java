@@ -4,7 +4,6 @@ import dev.jakubw.omnisentry.dto.AccountDto;
 import dev.jakubw.omnisentry.dto.ConnectionDto;
 import dev.jakubw.omnisentry.dto.TransactionDto;
 import dev.jakubw.omnisentry.dto.UserDto;
-import dev.jakubw.omnisentry.models.UserEntity;
 import dev.jakubw.omnisentry.services.internal.AccountService;
 import dev.jakubw.omnisentry.services.internal.ConnectionService;
 import dev.jakubw.omnisentry.services.SaltEdgeService;
@@ -14,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -41,13 +39,23 @@ public class UserController {
     /**
      *  TRANSACTIONS
      */
-    @GetMapping("/transactions")
-    public ResponseEntity<List<TransactionDto>> getTransactions(
+    @GetMapping(value = "/transactions", params = "connection_id")
+    public ResponseEntity<List<TransactionDto>> getTransactionsByConnection(
             @RequestParam("connection_id") String connectionId,
-            @RequestParam("page") int page,
-            @RequestParam("size") int size
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
     ) {
-        List<TransactionDto> dtos = transactionService.getTransactions(connectionId,page,size);
+        List<TransactionDto> dtos = transactionService.getTransactionsByConnection(connectionId, page, size);
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping(value = "/transactions", params = "account_id")
+    public ResponseEntity<List<TransactionDto>> getTransactionsByAccount(
+            @RequestParam("account_id") String accountId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
+    ) {
+        List<TransactionDto> dtos = transactionService.getTransactionsByAccount(accountId, page, size);
         return ResponseEntity.ok(dtos);
     }
 
